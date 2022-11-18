@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+#include "utils.h"
 
 void Model::load(const std::string &file_path, bool filpUV, bool genNormal) noexcept {
   uint32_t pFlags = aiProcess_Triangulate;
@@ -76,6 +77,11 @@ Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {
   // 处理材质
   if (mesh->mMaterialIndex >= 0) {
     aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+    std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE);
+    textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+
+    std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR);
+    textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
   }
   return std::move(Mesh(vertices, indices, textures));
 }
@@ -99,22 +105,27 @@ Texture::Type convert_from_aiTextureType(aiTextureType aitype) {
 }
 
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial *material, aiTextureType type) {
-  std::vector<Texture> textures;
+  std::vector<Texture> textures_tmp;
   for (uint32_t i = 0; i < material->GetTextureCount(type); ++i) {
     aiString str;
     material->GetTexture(type, i, &str);
     std::string texture_path = str.C_Str();
+    texture_path = texture_path.substr(texture_path.find_last_of('/'));
     texture_path = root_dir + '/' + texture_path;
 
     // 检查是否已经加载
     if (texture_loaded.find(texture_path) == texture_loaded.end()) {
       // 未加载
       Texture texture;
+      texture.id = Texture2DFromFile(texture_path);
+      texture.type = convert_from_aiTextureType(type);
+      texture_path = texture_path;
 
-
+      textures_tmp.push_back(texture);
+      texture_loaded.insert(std::pair<std::string, Texture>(texture_path, texture));
     } else {
-      textures.push_back(texture_loaded.find(texture_path)->second);
+      textures_tmp.push_back(texture_loaded.find(texture_path)->second);
     }
   }
-  return textures;
+  return textures_tmp;
 }

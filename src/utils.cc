@@ -6,7 +6,7 @@
 
 #include <stb_image.h>
 
-GLuint Texture2DFromFile(const std::string &file_path) noexcept {
+GLuint Texture2DFromFile(const std::string &file_path, GLenum warpMode, GLenum magFilterMode, GLenum minFilterMode) noexcept {
   GLuint texture_id;
 
   int32_t width, height, nrChannels;
@@ -34,10 +34,10 @@ GLuint Texture2DFromFile(const std::string &file_path) noexcept {
     glGenerateMipmap(GL_TEXTURE_2D);
 
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, warpMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, warpMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilterMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilterMode);
 
     stbi_image_free(data);
     glBindTexture(GL_TEXTURE_2D, GL_ZERO);
