@@ -13,8 +13,9 @@
 
 /** 顶点
  * 为了解决一个顶点多个纹理坐标的问题，现在约定:
- * 顶点着色器中对于纹理坐标的in的格式应该为texcoordN，其中N为从0开始的整数
- * 顶点坐标为 position，而法线为 normal, 对格式要求严格
+ * location 0 : position 放置顶点坐标
+ * location 1 : normal 放置法线
+ * location 8~15 : texcoord 纹理坐标
  */
 struct Vertex {
   glm::vec3 Position;                // 位置向量
@@ -48,10 +49,6 @@ public:
   void setup() noexcept;
   void draw(std::shared_ptr<ShaderProgram> shader) noexcept;
 
-private:
-  void prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept;
-  GLuint current_shader = GL_ZERO;
-
 public:
   // 基础数据
   std::vector<Vertex> vertices;   // 顶点
@@ -60,7 +57,6 @@ public:
 private:
   // 一些网格参数
   GLuint texcoords_layers = 0;                        // 网格中顶点对应的纹理坐标的层数：
-  std::unordered_map<GLuint, GLuint> shader_vao_map;  // 存储这个网格中 使用过的着色器和vao的绑定;
 
   bool has_setup = false;
 

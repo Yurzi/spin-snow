@@ -2,6 +2,7 @@
 bin/
 build/
 vcpkg_installed/
+assets/
 # Prerequisites
 *.d
 

@@ -13,6 +13,15 @@
 
 #include "utils.h"
 
+Model::~Model() {
+  std::vector<GLuint> textures_to_del;
+  for (auto &i : texture_loaded) {
+    textures_to_del.push_back(i.second.id);
+  }
+
+  glDeleteTextures(textures_to_del.size(), textures_to_del.data());
+}
+
 void Model::load(const std::string &file_path, bool filpUV, bool genNormal) noexcept {
   uint32_t pFlags = aiProcess_Triangulate;
   if (filpUV)
@@ -61,6 +70,9 @@ Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {
     while (mesh->HasTextureCoords(j)) {
       vertex.TexCoords.push_back({mesh->mTextureCoords[j][i].x, mesh->mTextureCoords[j][i].y});
       ++j;
+    }
+    if (j > 8) {
+      std::cout << "[WARN::Model::Load] too many sets of texcoord, the supported max is 8" << std::endl;
     }
 
     vertices.push_back(std::move(vertex));
@@ -114,7 +126,10 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
     aiString str;
     material->GetTexture(type, i, &str);
     std::string texture_path = str.C_Str();
-    texture_path = texture_path.substr(texture_path.find_last_of('/'));
+    int64_t last_slash_pos = texture_path.find_last_of('/');
+    if (last_slash_pos != std::string::npos) {
+      texture_path = texture_path.substr(last_slash_pos);
+    }
     texture_path = root_dir + '/' + texture_path;
 
     // 检查是否已经加载
@@ -129,7 +144,7 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
       }
 
       texture.type = convert_from_aiTextureType(type);
-      texture_path = texture_path;
+      texture.path = texture_path;
       textures_tmp.push_back(texture);
       texture_loaded.insert(std::pair<std::string, Texture>(texture_path, texture));
     } else {

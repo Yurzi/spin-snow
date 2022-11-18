@@ -23,6 +23,8 @@ public:
   void load(const std::string &file_path, uint32_t aiProcessFlags);
   void draw(std::shared_ptr<ShaderProgram> shader) noexcept;
 
+  std::vector<Mesh> meshs;
+
 private:
   Mesh processMesh(const aiMesh *mesh, const aiScene *scene) noexcept;
 
@@ -30,7 +32,6 @@ private:
   std::vector<Texture> loadMaterialTextures(const aiScene *scene, const aiMaterial *material, const aiTextureType type);
 
 private:
-  std::vector<Mesh> meshs;
   std::unordered_map<std::string, Texture> texture_loaded;
 
 private:

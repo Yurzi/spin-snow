@@ -14,16 +14,14 @@
 #include <stb_image.h>
 #include <stdint.h>
 // project header
-#include "mesh.h"
+#include "model.h"
 #include "shader.h"
 
 
 /* global */
 bool keyboadState[1024];
 std::shared_ptr<ShaderProgram> default_prog;
-std::shared_ptr<Mesh> plane;
-std::vector<glm::vec3> points, colors;
-std::vector<glm::vec2> texcoords;
+std::shared_ptr<Model> nanosuit;
 // clang-format on
 glm::vec3 scaleControl(1, 1, 1);
 glm::vec3 rotateControl(0, 0, 0);
@@ -56,69 +54,11 @@ void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_
 void processInput(GLFWwindow *window);
 // init function
 void init() {
-  std::vector<glm::vec3> vertexPosition = {
-    glm::vec3(-1, -0.2, -1),
-    glm::vec3(-1, -0.2, 1),
-    glm::vec3(1, -0.2, -1),
-    glm::vec3(1, -0.2, 1),
-  };
-  std::vector<glm::vec2> vertexTexcoord = {
-    glm::vec2(0, 0),
-    glm::vec2(0, 1),
-    glm::vec2(1, 0),
-    glm::vec2(1, 1),
-  };
-  // 根据顶点属性生成两个三角面片顶点位置 -- 共6个顶点
-  points.push_back(vertexPosition[0]);
-  points.push_back(vertexPosition[2]);
-  points.push_back(vertexPosition[1]);
-  points.push_back(vertexPosition[2]);
-  points.push_back(vertexPosition[3]);
-  points.push_back(vertexPosition[1]);
-  // 根据顶点属性生成三角面片的纹理坐标 -- 共6个顶点
-  texcoords.push_back(vertexTexcoord[0]);
-  texcoords.push_back(vertexTexcoord[2]);
-  texcoords.push_back(vertexTexcoord[1]);
-  texcoords.push_back(vertexTexcoord[2]);
-  texcoords.push_back(vertexTexcoord[3]);
-  texcoords.push_back(vertexTexcoord[1]);
-
-
   default_prog = std::make_shared<ShaderProgram>("shaders/default.vert", "shaders/default.frag");
 
-  // texture
-  GLuint texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-  int32_t textureWidth, textureHeight, nrChannerls;
-  unsigned char *image = stbi_load("assets/nya.png", &textureWidth, &textureHeight, &nrChannerls, 0);
-  if (image != nullptr) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureWidth, textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(GL_TEXTURE_2D);
-  } else {
-    std::cout << "[ERROR::Texture] texture fail to load" << std::endl;
-  }
-  stbi_image_free(image);
-  std::vector<Vertex> vertices = {
-    {{-1, 0.2, -1}, {0, 0, 0}, {{0, 0}, {1, 1}}},
-    { {-1, 0.2, 1}, {0, 0, 0}, {{0, 1}, {1, 0}}},
-    { {1, 0.2, -1}, {0, 0, 0}, {{1, 0}, {0, 1}}},
-    {  {1, 0.2, 1}, {0, 0, 0}, {{1, 1}, {0, 0}}},
-  };
-  std::vector<GLuint> indices = {0, 2, 1, 2, 3, 1};
-  std::vector<Texture> textures = {
-    {texture, Texture::diffuse}
-  };
+  nanosuit = std::make_shared<Model>("assets/JiaRan/JiaRan.pmx");
 
   default_prog->use();
-  plane = std::make_shared<Mesh>(vertices, indices, textures);
-
   glEnable(GL_DEPTH_TEST);
 }
 
@@ -147,7 +87,8 @@ void display() {
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  plane->draw(default_prog);
+  // nanosuit->draw(default_prog);
+  nanosuit->draw(default_prog);
 }
 
 // main

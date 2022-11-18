@@ -24,11 +24,9 @@ Mesh::~Mesh() {
   if (EBO != GL_ZERO) {
     glDeleteBuffers(1, &EBO);
   }
-  std::vector<GLuint> VAOs;
-  for (auto i : shader_vao_map) {
-    VAOs.push_back(i.second);
+  if (VAO != GL_ZERO) {
+    glDeleteBuffers(1, &VAO);
   }
-  glDeleteBuffers(VAOs.size(), VAOs.data());
 }
 
 void Mesh::setup() noexcept {
@@ -47,10 +45,15 @@ void Mesh::setup() noexcept {
     }
   }
 
+  glGenVertexArrays(1, &VAO);
   // 对于VBO指针的解析需要着色器对象，需要在draw call时进行
   // 同时要进行记忆, 所以将其和VAO的绑定将移动至draw call前进行
   glGenBuffers(1, &VBO);
   glGenBuffers(1, &EBO);
+  glBindVertexArray(VAO);
+  /*--------------------EBO----------------------------*/
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
 
   /*--------------------VBO----------------------------*/
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -62,8 +65,8 @@ void Mesh::setup() noexcept {
   // 2.复制数据到此连续内存空间
   for (int i = 0; i < this->vertices.size(); ++i) {
     VertexInner *ptr = (VertexInner *)(inner_data + i * perVertexSize);
-    ptr->Normal = this->vertices[i].Normal;
     ptr->Position = this->vertices[i].Position;
+    ptr->Normal = this->vertices[i].Normal;
     // memory copy [unsafe]
     memcpy_s(ptr->TexCoords,
              sizeof(glm::vec2) * this->texcoords_layers,
@@ -73,71 +76,28 @@ void Mesh::setup() noexcept {
 
   // 3.从内存空间将数据发送到GPU buffer
   glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * perVertexSize, inner_data, GL_STATIC_DRAW);
-  // 4.finish
-  glBindBuffer(GL_ARRAY_BUFFER, GL_ZERO);
+  // 4. 设置绑定
+  // 顶点
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, perVertexSize, (void *)0);
+  // 法线
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, perVertexSize, (void *)offsetof(VertexInner, Normal));
+  // 纹理
+  GLuint texcoord_start = 8;
+  for (int i = 0; i < this->texcoords_layers; ++i) {
+    GLuint texcoord_location = texcoord_start + i;
+    glEnableVertexAttribArray(texcoord_location);
+    glVertexAttribPointer(texcoord_location,
+                          2,
+                          GL_FLOAT,
+                          GL_FALSE,
+                          perVertexSize,
+                          (void *)(sizeof(glm::vec2) * i + offsetof(VertexInner, TexCoords)));
+  }
+  // 5.finish
   free(inner_data);
 
-  /*--------------------EBO----------------------------*/
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_ZERO);
-}
-
-void Mesh::prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept {
-  // o(1)的检测
-  if (shader->get_id() == current_shader) {
-    return;
-  }
-
-  GLuint shader_id = shader->get_id();
-  if (shader_vao_map.find(shader_id) != shader_vao_map.end()) {
-    // 证明已经绑定过了VAO了，将这个mesh的vao切换为它
-    VAO = shader_vao_map.find(shader_id)->second;
-    std::cout << "[INFO] VAO update" << std::endl;
-    return;
-  }
-  std::cout << "[INFO] new shader was registerd" << std::endl;
-  // 没有绑定过VAO
-  // 1. 生成VAO对象
-  glGenVertexArrays(1, &VAO);
-  current_shader = shader_id;
-  // 将此VAO添加进map中
-  shader_vao_map.insert(std::pair<GLuint, GLuint>(shader_id, VAO));
-  glBindVertexArray(VAO);
-  // 2. 将VBO和VAO进行绑定
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  // 2.1 绑定顶点位置
-  GLuint perVertexSize = sizeof(Vertex::Position) + sizeof(Vertex::Normal) + sizeof(glm::vec2) * this->texcoords_layers;
-  GLint position_location = glGetAttribLocation(shader_id, "position");
-  if (position_location != -1) {
-    glEnableVertexAttribArray(position_location);
-    glVertexAttribPointer(position_location, 3, GL_FLOAT, GL_FALSE, perVertexSize, (void *)0);
-  }
-  // 2.3 绑定顶点法线
-  GLint normal_location = glGetAttribLocation(shader_id, "normal");
-  if (normal_location != -1) {
-    glEnableVertexAttribArray(normal_location);
-    glVertexAttribPointer(normal_location, 3, GL_FLOAT, GL_FALSE, perVertexSize, (void *)offsetof(VertexInner, Normal));
-  }
-  // 2.4 绑定纹理坐标
-  const std::string texcoord_prefix = "texcoord";
-  for (int i = 0; i < this->texcoords_layers; ++i) {
-    std::string texcoord_name = texcoord_prefix + std::to_string(i);
-    GLuint texcoord_location = glGetAttribLocation(shader_id, texcoord_name.c_str());
-    if (texcoord_location != -1) {
-      glEnableVertexAttribArray(texcoord_location);
-      glVertexAttribPointer(texcoord_location,
-                            2,
-                            GL_FLOAT,
-                            GL_FALSE,
-                            perVertexSize,
-                            (void *)(sizeof(glm::vec2) * i + offsetof(VertexInner, TexCoords)));
-    }
-  }
-
-  // 3. 绑定EBO
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  // finish
   glBindVertexArray(GL_ZERO);
   glBindBuffer(GL_ARRAY_BUFFER, GL_ZERO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_ZERO);
@@ -145,9 +105,6 @@ void Mesh::prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept {
 
 
 void Mesh::draw(std::shared_ptr<ShaderProgram> shader) noexcept {
-  // 绘制前准备工作
-  prepare_draw(shader);
-
   GLuint diffuseNr = 0;
   GLuint specularNr = 0;
   const std::string prefix = "material.";

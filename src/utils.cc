@@ -10,6 +10,7 @@ GLuint Texture2DFromFile(const std::string &file_path, GLenum wrapMode, GLenum m
   GLuint texture_id;
 
   int32_t width, height, nrChannels;
+//  stbi_set_flip_vertically_on_load(true);
   unsigned char *data = stbi_load(file_path.c_str(), &width, &height, &nrChannels, 0);
 
   if (data != nullptr) {
