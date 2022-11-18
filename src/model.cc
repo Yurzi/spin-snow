@@ -8,6 +8,9 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <stdint.h>
 
@@ -99,6 +102,26 @@ Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {
 }
 
 void Model::draw(std::shared_ptr<ShaderProgram> shader) noexcept {
+  // 传模型矩阵
+  glm::mat4 unit(1.0f);  // 单位矩阵
+  glm::mat4 scale = glm::scale(unit, this->scale);
+  glm::mat4 translate = glm::translate(unit, this->translate);
+
+  glm::mat4 rotate = unit;  // 旋转
+  rotate = glm::rotate(rotate, glm::radians(this->rotate.x), glm::vec3(1, 0, 0));
+  rotate = glm::rotate(rotate, glm::radians(this->rotate.y), glm::vec3(0, 1, 0));
+  rotate = glm::rotate(rotate, glm::radians(this->rotate.z), glm::vec3(0, 0, 1));
+
+  // 模型变换矩阵
+  glm::mat4 model = translate * rotate * scale;
+  GLuint mlocation = glGetUniformLocation(shader->get_id(), "model");  // 名为model的uniform变量的位置索引
+  glUniformMatrix4fv(mlocation, 1, GL_FALSE, glm::value_ptr(model));   // 列优先矩阵
+
+  // 计算模型矩阵逆矩阵的转置
+  glm::mat4 TinverseModel = glm::transpose(glm::inverse(model));
+  GLuint timlocation = glGetUniformLocation(shader->get_id(), "TinverseModel");
+  glUniformMatrix4fv(timlocation, 1, GL_FALSE, glm::value_ptr(TinverseModel));
+
   for (uint32_t i = 0; i < meshs.size(); ++i) {
     meshs[i].draw(shader);
   }

@@ -29,6 +29,7 @@ set(SRC_LIST
   src/shader.cc
   src/mesh.cc
   src/model.cc
+  src/camera.cc
   src/stb_image.cc
   )
 
