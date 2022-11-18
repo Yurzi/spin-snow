@@ -27,7 +27,7 @@ private:
   Mesh processMesh(const aiMesh *mesh, const aiScene *scene) noexcept;
 
 private:
-  std::vector<Texture> loadMaterialTextures(aiMaterial *material, aiTextureType type);
+  std::vector<Texture> loadMaterialTextures(const aiScene *scene, const aiMaterial *material, const aiTextureType type);
 
 private:
   std::vector<Mesh> meshs;

@@ -77,16 +77,20 @@ Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {
   // 处理材质
   if (mesh->mMaterialIndex >= 0) {
     aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-    std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE);
+    std::vector<Texture> diffuseMaps = loadMaterialTextures(scene, material, aiTextureType_DIFFUSE);
     textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
-    std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR);
+    std::vector<Texture> specularMaps = loadMaterialTextures(scene, material, aiTextureType_SPECULAR);
     textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
   }
   return std::move(Mesh(vertices, indices, textures));
 }
 
-void Model::draw(std::shared_ptr<ShaderProgram> shader) noexcept {}
+void Model::draw(std::shared_ptr<ShaderProgram> shader) noexcept {
+  for (uint32_t i = 0; i < meshs.size(); ++i) {
+    meshs[i].draw(shader);
+  }
+}
 
 
 Texture::Type convert_from_aiTextureType(aiTextureType aitype) {
@@ -104,7 +108,7 @@ Texture::Type convert_from_aiTextureType(aiTextureType aitype) {
   return custom_type;
 }
 
-std::vector<Texture> Model::loadMaterialTextures(aiMaterial *material, aiTextureType type) {
+std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiMaterial *material, const aiTextureType type) {
   std::vector<Texture> textures_tmp;
   for (uint32_t i = 0; i < material->GetTextureCount(type); ++i) {
     aiString str;
@@ -117,10 +121,15 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *material, aiTexture
     if (texture_loaded.find(texture_path) == texture_loaded.end()) {
       // 未加载
       Texture texture;
-      texture.id = Texture2DFromFile(texture_path);
+      const aiTexture *aitexture = scene->GetEmbeddedTexture(texture_path.c_str());
+      if (aitexture != nullptr) {
+        texture.id = Texture2DFromAssimp(aitexture);
+      } else {
+        texture.id = Texture2DFromFile(texture_path);
+      }
+
       texture.type = convert_from_aiTextureType(type);
       texture_path = texture_path;
-
       textures_tmp.push_back(texture);
       texture_loaded.insert(std::pair<std::string, Texture>(texture_path, texture));
     } else {
