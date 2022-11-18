@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "name": "chaos",
+  "version": "0.0.1",
+  "dependencies": [
+    "opengl",
+    "glfw3",
+    {
+      "name": "glad",
+      "features": [
+        "gl-api-latest"
+      ]
+    },
+    "glm",
+    "assimp",
+    {
+      "name": "imgui",
+      "features": [
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    },
+    "stb"
+  ]
+}
