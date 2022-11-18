@@ -24,9 +24,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # [source]
 set(SRC_LIST
+  src/utils.cc
   src/main.cc
   src/shader.cc
   src/mesh.cc
+  src/model.cc
   src/stb_image.cc
   )
 

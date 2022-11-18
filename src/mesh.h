@@ -28,12 +28,13 @@ struct Vertex {
  * 镜面反射纹理: material.texture_specularN; N >=0;
  */
 struct Texture {
-  enum type {
+  enum Type {
     diffuse = 0,
     specular = 1,
   };
-  GLuint id;  // 材质id
-  type type;  // 材质类型
+  GLuint id;         // 材质id
+  Type type;         // 材质类型
+  std::string path;  // 纹理文件的位置
 };
 
 
