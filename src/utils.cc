@@ -10,7 +10,7 @@ GLuint Texture2DFromFile(const std::string &file_path, GLenum wrapMode, GLenum m
   GLuint texture_id;
 
   int32_t width, height, nrChannels;
-//  stbi_set_flip_vertically_on_load(true);
+  //  stbi_set_flip_vertically_on_load(true);
   unsigned char *data = stbi_load(file_path.c_str(), &width, &height, &nrChannels, 0);
 
   if (data != nullptr) {
@@ -105,5 +105,58 @@ GLuint Texture2DFromAssimp(const aiTexture *aitexture, GLenum wrapMode, GLenum m
     std::cout << "[ERROR::Utils::Texture2DFromAssimp] Failed to load texture from memroy " << std::endl;
   }
 
+  return texture_id;
+}
+
+GLuint Texture2DFromUChar(const unsigned char data[],
+                          GLuint width,
+                          GLuint height,
+                          GLenum formatMode,
+                          GLenum wrapMode,
+                          GLenum magFilterMode,
+                          GLenum minFilterMode) noexcept {
+  unsigned char *image = nullptr;
+  GLuint unit_size = 4;
+  GLuint length = 0;
+  if (data == nullptr) {
+    formatMode = GL_RGBA;
+    length = width * height * unit_size;
+    image = (unsigned char *)malloc(sizeof(unsigned char) * length);
+    memset(image, 0, length);
+  } else {
+    switch (formatMode) {
+    case GL_RED:
+      unit_size = 1;
+      break;
+    case GL_RGB:
+      unit_size = 3;
+      break;
+    case GL_RGBA:
+      unit_size = 4;
+      break;
+    default:
+      unit_size = 4;
+    }
+    length = width * height * unit_size;
+    image = (unsigned char *)malloc(sizeof(unsigned char) * length);
+    memcpy_s(image, length, data, length);
+  }
+
+  GLuint texture_id;
+  glGenTextures(1, &texture_id);
+  glBindTexture(GL_TEXTURE_2D, texture_id);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilterMode);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilterMode);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, formatMode, width, height, 0, formatMode, GL_UNSIGNED_BYTE, image);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  glBindTexture(GL_TEXTURE_2D, GL_ZERO);
+
+  free(image);
   return texture_id;
 }

@@ -98,7 +98,7 @@ void Model::load(const std::string &file_path, bool filpUV, bool genNormal) noex
   if (filpUV)
     pFlags |= aiProcess_FlipUVs;
   if (genNormal)
-    pFlags |= aiProcess_GenNormals;
+    pFlags |= aiProcess_GenSmoothNormals;
 
   load(file_path, pFlags);
 }
@@ -148,9 +148,6 @@ Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {
     while (mesh->HasTextureCoords(j)) {
       vertex.TexCoords.push_back({mesh->mTextureCoords[j][i].x, mesh->mTextureCoords[j][i].y});
       ++j;
-    }
-    if (j > 8) {
-      std::cout << "[WARN::Model::Load] too many sets of texcoord, the supported max is 8" << std::endl;
     }
 
     vertices.push_back(std::move(vertex));
@@ -221,7 +218,8 @@ Texture::Type convert_from_aiTextureType(aiTextureType aitype) {
 
 std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiMaterial *material, const aiTextureType type) {
   std::vector<Texture> textures_tmp;
-  for (uint32_t i = 0; i < material->GetTextureCount(type); ++i) {
+  uint32_t i = 0;
+  for (i = 0; i < material->GetTextureCount(type); ++i) {
     aiString str;
     material->GetTexture(type, i, &str);
     std::string texture_path = str.C_Str();
@@ -245,9 +243,24 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
       texture.type = convert_from_aiTextureType(type);
       texture.path = texture_path;
       textures_tmp.push_back(texture);
-      texture_loaded.insert(std::pair<std::string, Texture>(texture_path, texture));
+      texture_loaded.insert(std::pair<std::string, Texture>(texture.path, texture));
     } else {
       textures_tmp.push_back(texture_loaded.find(texture_path)->second);
+    }
+  }
+  // 检查是否为不存在而退出
+  if (i == 0) {
+    const std::string default_texture_path = "<**[YURZI::TEXTURE::DEFAULT]**>";
+    // 添加默认材质 [hard code may be unsafe consider random string]
+    if (texture_loaded.find(default_texture_path) == texture_loaded.end()) {
+      Texture texture;
+      texture.id = Texture2DFromUChar(nullptr);
+      texture.type = convert_from_aiTextureType(type);
+      texture.path = default_texture_path;
+      textures_tmp.push_back(texture);
+      texture_loaded.insert(std::pair<std::string, Texture>(texture.path, texture));
+    }else {
+      textures_tmp.push_back(texture_loaded.find(default_texture_path)->second);
     }
   }
   return textures_tmp;

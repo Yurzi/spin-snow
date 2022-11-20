@@ -11,6 +11,9 @@
 #include <string_view>
 #include <vector>
 
+#include "light.h"
+#include "material.h"
+
 class Shader {
 public:
   explicit Shader(const std::string_view &src_path);
@@ -55,6 +58,9 @@ public:
   void set_unifom(const std::string_view &name, const glm::vec3 &value) const noexcept;
   void set_unifom(const std::string_view &name, const glm::vec4 &value) const noexcept;
   void set_unifom(const std::string_view &name, const glm::mat4 &value) const noexcept;
+
+  void set_light(const std::string_view &name, const Light& value) const noexcept;
+  void set_material(const std::string_view &name, const Material& value) const noexcept;
 
 private:
   void initliazer(const std::vector<std::shared_ptr<Shader>> &shaders) noexcept;

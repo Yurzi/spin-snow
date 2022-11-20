@@ -17,17 +17,18 @@
 #include "camera.h"
 #include "model.h"
 #include "shader.h"
-
+#include "light.h"
 
 /* global */
 bool keyboadState[1024];
 std::shared_ptr<ShaderProgram> default_prog;
 std::shared_ptr<ShaderProgram> dot_light_prog;
 
-std::shared_ptr<Model> cube;
+std::shared_ptr<Model> model;
 std::shared_ptr<Model> cube_light;
 
-glm::vec3 lightPos(2.2f, 2.0f, -4.0f);
+Light light;
+
 
 int32_t windowWidth = 1024;
 int32_t windowHeight = 720;
@@ -44,43 +45,50 @@ void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_
 void processInput(GLFWwindow *window);
 // init function
 void init() {
+  // init shader
   default_prog = std::make_shared<ShaderProgram>("shaders/default.vert", "shaders/default.frag");
   dot_light_prog = std::make_shared<ShaderProgram>("shaders/default.vert", "shaders/dot_light.frag");
 
+  // init camera
   camera = std::make_shared<Camera>();
   camera->aspect = (float)windowWidth / windowHeight;
   camera->position = {0, 3, 5};
 
+  // init light
+  light.position = glm::vec3(2.2f, 2.0f, -4.0f);
+  light.type= Light::PointLight;
+
   // init objects;
-  cube = std::make_shared<Model>("assets/cube.obj");
+  model = std::make_shared<Model>("assets/ちびAppearance_Miku_Ver1_51 - 银色小九尾/ちびAppearanceミクVer1_51小尾巴.pmx");
   cube_light = std::make_shared<Model>("assets/cube.obj");
 
   cube_light->scale = {0.2, 0.2, 0.2};
-  cube_light->translate = lightPos;
+  cube_light->translate = light.position;
 
-
+  // properties setting
   default_prog->use();
-  default_prog->set_unifom("objectColor", {1.0f, 0.5f, 0.31f});
-  default_prog->set_unifom("lightColor", {1.0f, 1.0f, 1.0f});
 
   glEnable(GL_DEPTH_TEST);
 }
 
 void display() {
   // 传递光源位置
-  default_prog->set_unifom("lightPos", lightPos);
+  default_prog->use();
+  default_prog->set_light("light", light);
+
   // 传递相机位置
   default_prog->set_unifom("cameraPos", camera->position);
 
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   /*-----draw objs-------*/
-  default_prog->use();
-  cube->draw(default_prog, camera);
 
   dot_light_prog->use();
-  cube_light->translate = lightPos;
+  cube_light->translate = light.position;
   cube_light->draw(dot_light_prog, camera);
+
+  default_prog->use();
+  model->draw(default_prog, camera);
 }
 
 // main
@@ -168,21 +176,21 @@ void processInput(GLFWwindow *window) {
     camera->position.y -= 0.05f;
 
   if (keyboadState[GLFW_KEY_I]) {
-    lightPos.z -= 0.05f;
+    light.position.z -= 0.05f;
   }
   if (keyboadState[GLFW_KEY_K]) {
-    lightPos.z += 0.05f;
+    light.position.z += 0.05f;
   }
   if (keyboadState[GLFW_KEY_J]) {
-    lightPos.x -= 0.05f;
+    light.position.x -= 0.05f;
   }
   if (keyboadState[GLFW_KEY_L]) {
-    lightPos.x += 0.05f;
+    light.position.x += 0.05f;
   }
   if (keyboadState[GLFW_KEY_U])
-    lightPos.y += 0.05f;
+    light.position.y += 0.05f;
   if (keyboadState[GLFW_KEY_H])
-    lightPos.y -= 0.05f;
+    light.position.y -= 0.05f;
 }
 
 void mouse_move_callback(GLFWwindow *window, double x, double y) {

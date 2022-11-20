@@ -148,4 +148,24 @@ void ShaderProgram::set_unifom(const std::string_view &name, const glm::mat4 &va
   glUniformMatrix4fv(glGetUniformLocation(this->m_id, name.data()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
+void ShaderProgram::set_light(const std::string_view &name, const Light& value) const noexcept {
+  std::string prefix = name.data();
+  prefix += '.';
+  set_unifom(prefix + "type", value.type);
+  set_unifom(prefix + "position", value.position);
+  set_unifom(prefix + "direction", value.direction);
+  set_unifom(prefix + "inner_cutoff", value.inner_cutoff);
+  set_unifom(prefix + "outer_cutoff", value.outer_cutoff);
+  set_unifom(prefix + "ambient", value.ambient);
+  set_unifom(prefix + "diffuse", value.diffuse);
+  set_unifom(prefix + "specular", value.specular);
+}
+void ShaderProgram::set_material(const std::string_view &name, const Material& value) const noexcept {
+  std::string prefix = name.data();
+  prefix += '.';
+  set_unifom(prefix + "ambient", value.ambient);
+  set_unifom(prefix + "diffuse", value.diffuse);
+  set_unifom(prefix + "specular", value.specular);
+}
+
 void ShaderProgram::use() const noexcept { glUseProgram(this->m_id); }

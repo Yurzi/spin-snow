@@ -17,4 +17,10 @@ GLuint Texture2DFromAssimp(const aiTexture *aitexture,
                            GLenum wrapMode = GL_REPEAT,
                            GLenum magFilterMode = GL_LINEAR,
                            GLenum minFilterMode = GL_LINEAR_MIPMAP_LINEAR) noexcept;
+
+GLuint Texture2DFromUChar(const unsigned char data[], GLuint width = 1, GLuint height = 1,
+                          GLenum formatMode = GL_RGBA,
+                          GLenum wrapMode = GL_REPEAT,
+                          GLenum magFilterMode = GL_LINEAR,
+                          GLenum minFilterMode = GL_LINEAR_MIPMAP_LINEAR) noexcept;
 #endif  // !__UTILS_H__

@@ -12,9 +12,10 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 NormalMatrix;
 
+
 void main() {
   gl_Position = projection * view * model * vec4(position, 1.0);
-  //texcoordOut0 = vec2(texcoord0.x, texcoord0.y);
+  texcoordOut0 = texcoord0;
   worldPos = (model * vec4(position, 1.0)).xyz;
   normalOut = normalize(NormalMatrix * vec4(normal, 0.0f)).xyz;
 }
