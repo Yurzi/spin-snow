@@ -15,9 +15,9 @@
 #include <stdint.h>
 // project header
 #include "camera.h"
+#include "light.h"
 #include "model.h"
 #include "shader.h"
-#include "light.h"
 
 /* global */
 bool keyboadState[1024];
@@ -26,6 +26,7 @@ std::shared_ptr<ShaderProgram> dot_light_prog;
 
 std::shared_ptr<Model> model;
 std::shared_ptr<Model> cube_light;
+std::shared_ptr<Mesh> ground;
 
 Light light;
 
@@ -56,16 +57,26 @@ void init() {
 
   // init light
   light.position = glm::vec3(2.2f, 2.0f, -4.0f);
-  light.type= Light::PointLight;
+  light.type = Light::PointLight;
 
   // init objects;
   model = std::make_shared<Model>("assets/ちびAppearance_Miku_Ver1_51 - 银色小九尾/ちびAppearanceミクVer1_51小尾巴.pmx");
   cube_light = std::make_shared<Model>("assets/cube.obj");
+  ground = std::make_shared<Mesh>();
+  ground->vertices = {
+    {{-1, 0, -1}, {0, 1, 0}, {0, 1}},
+    { {-1, 0, 1}, {0, 1, 0}, {0, 0}},
+    {  {1, 0, 1}, {0, 1, 0}, {1, 0}},
+    { {1, 0, -1}, {0, 1, 0}, {1, 1}}
+  };
+  ground->indices = {0, 1, 2, 0, 3, 2};
 
+  // properties setting
+  ground->scale = glm::vec3(10, 10, 10);
   cube_light->scale = {0.2, 0.2, 0.2};
   cube_light->translate = light.position;
 
-  // properties setting
+
   default_prog->use();
 
   glEnable(GL_DEPTH_TEST);
@@ -89,6 +100,7 @@ void display() {
 
   default_prog->use();
   model->draw(default_prog, camera);
+  ground->draw(default_prog, camera);
 }
 
 // main
