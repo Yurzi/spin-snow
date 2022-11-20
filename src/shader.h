@@ -52,18 +52,18 @@ public:
   void use() const noexcept;
   constexpr GLuint get_id() const noexcept { return this->m_id; }
 
-  void set_unifom(const std::string_view &name, bool value) const noexcept;
-  void set_unifom(const std::string_view &name, GLint value) const noexcept;
-  void set_unifom(const std::string_view &name, GLfloat value) const noexcept;
-  void set_unifom(const std::string_view &name, const glm::vec3 &value) const noexcept;
-  void set_unifom(const std::string_view &name, const glm::vec4 &value) const noexcept;
-  void set_unifom(const std::string_view &name, const glm::mat4 &value) const noexcept;
+  void set_uniform(const std::string_view &name, bool value) const noexcept;
+  void set_uniform(const std::string_view &name, GLint value) const noexcept;
+  void set_uniform(const std::string_view &name, GLfloat value) const noexcept;
+  void set_uniform(const std::string_view &name, const glm::vec3 &value) const noexcept;
+  void set_uniform(const std::string_view &name, const glm::vec4 &value) const noexcept;
+  void set_uniform(const std::string_view &name, const glm::mat4 &value) const noexcept;
 
   void set_light(const std::string_view &name, const Light& value) const noexcept;
   void set_material(const std::string_view &name, const Material& value) const noexcept;
 
 private:
-  void initliazer(const std::vector<std::shared_ptr<Shader>> &shaders) noexcept;
+  void init(const std::vector<std::shared_ptr<Shader>> &shaders) noexcept;
 
 private:
   GLuint m_id;

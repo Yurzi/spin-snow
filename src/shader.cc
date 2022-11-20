@@ -104,12 +104,12 @@ ShaderProgram::ShaderProgram(const std::string_view &vertex_shader_filename,
   if (fragement_shader->get_status()) {
     shaders.push_back(fragement_shader);
   }
-  this->initliazer(shaders);
+  this->init(shaders);
 }
 
-ShaderProgram::ShaderProgram(const std::vector<std::shared_ptr<Shader>> &shaders) { this->initliazer(shaders); }
+ShaderProgram::ShaderProgram(const std::vector<std::shared_ptr<Shader>> &shaders) { this->init(shaders); }
 
-void ShaderProgram::initliazer(const std::vector<std::shared_ptr<Shader>> &shaders) noexcept {
+void ShaderProgram::init(const std::vector<std::shared_ptr<Shader>> &shaders) noexcept {
   this->m_id = glCreateProgram();
   for (auto idx : shaders) {
     glAttachShader(this->m_id, idx->get_id());
@@ -129,43 +129,51 @@ ShaderProgram::~ShaderProgram() {
   }
 }
 
-void ShaderProgram::set_unifom(const std::string_view &name, bool value) const noexcept {
+void ShaderProgram::set_uniform(const std::string_view &name, bool value) const noexcept {
+  this->use();
   glUniform1i(glGetUniformLocation(this->m_id, name.data()), static_cast<int>(value));
 }
-void ShaderProgram::set_unifom(const std::string_view &name, GLint value) const noexcept {
+void ShaderProgram::set_uniform(const std::string_view &name, GLint value) const noexcept {
+  this->use();
   glUniform1i(glGetUniformLocation(this->m_id, name.data()), value);
 }
-void ShaderProgram::set_unifom(const std::string_view &name, GLfloat value) const noexcept {
+void ShaderProgram::set_uniform(const std::string_view &name, GLfloat value) const noexcept {
+  this->use();
   glUniform1f(glGetUniformLocation(this->m_id, name.data()), value);
 }
-void ShaderProgram::set_unifom(const std::string_view &name, const glm::vec3 &value) const noexcept {
+void ShaderProgram::set_uniform(const std::string_view &name, const glm::vec3 &value) const noexcept {
+  this->use();
   glUniform3fv(glGetUniformLocation(this->m_id, name.data()), 1, glm::value_ptr(value));
 }
-void ShaderProgram::set_unifom(const std::string_view &name, const glm::vec4 &value) const noexcept {
+void ShaderProgram::set_uniform(const std::string_view &name, const glm::vec4 &value) const noexcept {
+  this->use();
   glUniform4fv(glGetUniformLocation(this->m_id, name.data()), 1, glm::value_ptr(value));
 }
-void ShaderProgram::set_unifom(const std::string_view &name, const glm::mat4 &value) const noexcept {
+void ShaderProgram::set_uniform(const std::string_view &name, const glm::mat4 &value) const noexcept {
+  this->use();
   glUniformMatrix4fv(glGetUniformLocation(this->m_id, name.data()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void ShaderProgram::set_light(const std::string_view &name, const Light& value) const noexcept {
+  this->use();
   std::string prefix = name.data();
   prefix += '.';
-  set_unifom(prefix + "type", value.type);
-  set_unifom(prefix + "position", value.position);
-  set_unifom(prefix + "direction", value.direction);
-  set_unifom(prefix + "inner_cutoff", value.inner_cutoff);
-  set_unifom(prefix + "outer_cutoff", value.outer_cutoff);
-  set_unifom(prefix + "ambient", value.ambient);
-  set_unifom(prefix + "diffuse", value.diffuse);
-  set_unifom(prefix + "specular", value.specular);
+  set_uniform(prefix + "type", value.type);
+  set_uniform(prefix + "position", value.position);
+  set_uniform(prefix + "direction", value.direction);
+  set_uniform(prefix + "inner_cutoff", value.inner_cutoff);
+  set_uniform(prefix + "outer_cutoff", value.outer_cutoff);
+  set_uniform(prefix + "ambient", value.ambient);
+  set_uniform(prefix + "diffuse", value.diffuse);
+  set_uniform(prefix + "specular", value.specular);
 }
 void ShaderProgram::set_material(const std::string_view &name, const Material& value) const noexcept {
+  this->use();
   std::string prefix = name.data();
   prefix += '.';
-  set_unifom(prefix + "ambient", value.ambient);
-  set_unifom(prefix + "diffuse", value.diffuse);
-  set_unifom(prefix + "specular", value.specular);
+  set_uniform(prefix + "ambient", value.ambient);
+  set_uniform(prefix + "diffuse", value.diffuse);
+  set_uniform(prefix + "specular", value.specular);
 }
 
 void ShaderProgram::use() const noexcept { glUseProgram(this->m_id); }

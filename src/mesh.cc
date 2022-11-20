@@ -245,14 +245,14 @@ void Mesh::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> c
 
     // 模型变换矩阵
     glm::mat4 model = translate * rotate * scale;
-    shader->set_unifom("model", model);
+    shader->set_uniform("model", model);
 
     // 计算模型矩阵逆矩阵的转置
     glm::mat4 NormalMatrix = glm::transpose(glm::inverse(model));
-    shader->set_unifom("NormalMatrix", NormalMatrix);
+    shader->set_uniform("NormalMatrix", NormalMatrix);
 
-    shader->set_unifom("view", camera->getViewMatrix());
-    shader->set_unifom("projection", camera->getProjectionMatrix());
+    shader->set_uniform("view", camera->getViewMatrix());
+    shader->set_uniform("projection", camera->getProjectionMatrix());
   }
 
   GLuint diffuseNr = 0;
@@ -272,7 +272,7 @@ void Mesh::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> c
       number = std::to_string(specularNr++);
     }
     glBindTexture(GL_TEXTURE_2D, textures[i].id);
-    shader->set_unifom(prefix + name + number, i);
+    shader->set_uniform(prefix + name + number, i);
   }
   glActiveTexture(GL_TEXTURE0);
 
@@ -280,4 +280,5 @@ void Mesh::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> c
   glBindVertexArray(VAO);
   glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
   glBindVertexArray(GL_ZERO);
+  glBindTexture(GL_TEXTURE_2D, GL_ZERO);
 }

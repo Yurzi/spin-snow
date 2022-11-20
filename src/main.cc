@@ -18,6 +18,7 @@
 #include "light.h"
 #include "model.h"
 #include "shader.h"
+#include "utils.h"
 
 /* global */
 bool keyboadState[1024];
@@ -58,6 +59,7 @@ void init() {
   // init light
   light.position = glm::vec3(2.2f, 2.0f, -4.0f);
   light.type = Light::PointLight;
+  light.diffuse = {(float)218/255, (float)218/255, (float)192/255};
 
   // init objects;
   model = std::make_shared<Model>("assets/ちびAppearance_Miku_Ver1_51 - 银色小九尾/ちびAppearanceミクVer1_51小尾巴.pmx");
@@ -70,6 +72,17 @@ void init() {
     { {1, 0, -1}, {0, 1, 0}, {1, 1}}
   };
   ground->indices = {0, 1, 2, 0, 3, 2};
+  ground->setup();
+
+  // texture init
+  Texture texture;
+  texture.type = Texture::diffuse;
+  texture.path = "assets/wall.jpg";
+  texture.id = Texture2DFromFile(texture.path);
+  ground->textures.push_back(texture);
+  texture.type = Texture::specular;
+  texture.id = Texture2DFromUChar(nullptr);
+  ground->textures.push_back(texture);
 
   // properties setting
   ground->scale = glm::vec3(10, 10, 10);
@@ -84,11 +97,11 @@ void init() {
 
 void display() {
   // 传递光源位置
-  default_prog->use();
   default_prog->set_light("light", light);
+  dot_light_prog->set_light("light", light);
 
   // 传递相机位置
-  default_prog->set_unifom("cameraPos", camera->position);
+  default_prog->set_uniform("cameraPos", camera->position);
 
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -186,14 +186,14 @@ void Model::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> 
 
   // 模型变换矩阵
   glm::mat4 model = translate * rotate * scale;
-  shader->set_unifom("model", model);
+  shader->set_uniform("model", model);
 
   // 计算模型矩阵逆矩阵的转置
   glm::mat4 NormalMatrix = glm::transpose(glm::inverse(model));
-  shader->set_unifom("NormalMatrix", NormalMatrix);
+  shader->set_uniform("NormalMatrix", NormalMatrix);
 
-  shader->set_unifom("view", camera->getViewMatrix());
-  shader->set_unifom("projection", camera->getProjectionMatrix());
+  shader->set_uniform("view", camera->getViewMatrix());
+  shader->set_uniform("projection", camera->getProjectionMatrix());
 
   for (uint32_t i = 0; i < meshs.size(); ++i) {
     meshs[i].draw(shader);
