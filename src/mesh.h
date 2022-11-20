@@ -8,19 +8,28 @@
 #include <unordered_map>
 #include <vector>
 
-
 #include "shader.h"
+
+const static std::string shader_postion_in = "position";
+const static std::string shader_normal_in = "normal";
+const static std::string shader_texcoord_prefix_in = "texcoord";
 
 /** 顶点
  * 为了解决一个顶点多个纹理坐标的问题，现在约定:
- * location 0 : position 放置顶点坐标
- * location 1 : normal 放置法线
- * location 8~15 : texcoord 纹理坐标
+ * position 放置顶点坐标
+ * normal 放置法线
+ * texcoordN 纹理坐标
  */
 struct Vertex {
-  glm::vec3 Position;                // 位置向量
-  glm::vec3 Normal;                  // 法线
-  std::vector<glm::vec2> TexCoords;  // 纹理坐标 assimp 允许一个顶点有多个纹理坐标
+  glm::vec3 Position = glm::vec3(0, 0, 0);  // 位置向量
+  glm::vec3 Normal = glm::vec3(0, 0, 0);    // 法线
+  std::vector<glm::vec2> TexCoords;         // 纹理坐标 assimp 允许一个顶点有多个纹理坐标
+  Vertex(){};
+  Vertex(glm::vec3 Position, glm::vec3 Normal = {0, 0, 0}, glm::vec2 TexCoord = {0, 0}) {
+    this->Position = Position;
+    this->Normal = Normal;
+    this->TexCoords.push_back(TexCoord);
+  }
 };
 
 /** 材质
@@ -44,6 +53,10 @@ public:
   // 方法
   Mesh(){};
   Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices, const std::vector<Texture> &textures);
+  Mesh(const Mesh &oth);
+  Mesh(Mesh &&oth);
+  Mesh &operator=(const Mesh &oth) noexcept;
+  Mesh &operator=(Mesh &&oth) noexcept;
   ~Mesh();
 
   void setup() noexcept;
@@ -55,10 +68,15 @@ public:
   std::vector<GLuint> indices;    // 索引
   std::vector<Texture> textures;  // 材质
 private:
-  // 一些网格参数
-  GLuint texcoords_layers = 0;                        // 网格中顶点对应的纹理坐标的层数：
+  void prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept;
 
+private:
+  // 一些网格参数
+  GLuint texcoords_layers = 0;  // 网格中顶点对应的纹理坐标的层数：
   bool has_setup = false;
+
+  std::unordered_map<GLuint, GLuint> shader_vao_map;
+  GLuint current_shader = GL_ZERO;
 
 private:
   // 渲染数据

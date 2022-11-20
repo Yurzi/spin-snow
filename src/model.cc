@@ -16,6 +16,71 @@
 
 #include "utils.h"
 
+Model::Model(const Model &oth) {
+  this->translate = oth.translate;
+  this->rotate = oth.rotate;
+  this->scale = oth.scale;
+
+  this->model_path = oth.model_path;
+  this->aiProcessFlags = oth.aiProcessFlags;
+  this->root_dir = oth.root_dir;
+
+  this->has_loaded = false;
+
+  load(this->model_path, this->aiProcessFlags);
+}
+Model::Model(Model &&oth) {
+  this->translate = std::move(oth.translate);
+  this->rotate = std::move(oth.rotate);
+  this->scale = std::move(oth.scale);
+
+  this->model_path = std::move(oth.model_path);
+  this->aiProcessFlags = oth.aiProcessFlags;
+  this->root_dir = std::move(oth.root_dir);
+
+  this->meshs = std::move(oth.meshs);
+  oth.meshs.clear();
+  this->texture_loaded = std::move(oth.texture_loaded);
+  oth.texture_loaded.clear();
+
+  this->has_loaded = true;
+
+  load(this->model_path, this->aiProcessFlags);
+}
+Model &Model::operator=(const Model &oth) noexcept {
+  this->translate = oth.translate;
+  this->rotate = oth.rotate;
+  this->scale = oth.scale;
+
+  this->model_path = oth.model_path;
+  this->aiProcessFlags = oth.aiProcessFlags;
+  this->root_dir = oth.root_dir;
+
+  this->has_loaded = false;
+
+  load(this->model_path, this->aiProcessFlags);
+  return (*this);
+}
+Model &Model::operator=(Model &&oth) noexcept {
+  this->translate = std::move(oth.translate);
+  this->rotate = std::move(oth.rotate);
+  this->scale = std::move(oth.scale);
+
+  this->model_path = std::move(oth.model_path);
+  this->aiProcessFlags = oth.aiProcessFlags;
+  this->root_dir = std::move(oth.root_dir);
+
+  this->meshs = std::move(oth.meshs);
+  oth.meshs.clear();
+  this->texture_loaded = std::move(oth.texture_loaded);
+  oth.texture_loaded.clear();
+
+  this->has_loaded = true;
+
+  load(this->model_path, this->aiProcessFlags);
+  return (*this);
+}
+
 Model::~Model() {
   std::vector<GLuint> textures_to_del;
   for (auto &i : texture_loaded) {
@@ -26,6 +91,9 @@ Model::~Model() {
 }
 
 void Model::load(const std::string &file_path, bool filpUV, bool genNormal) noexcept {
+  if (has_loaded) {
+    return;
+  }
   uint32_t pFlags = aiProcess_Triangulate;
   if (filpUV)
     pFlags |= aiProcess_FlipUVs;
@@ -36,6 +104,12 @@ void Model::load(const std::string &file_path, bool filpUV, bool genNormal) noex
 }
 
 void Model::load(const std::string &file_path, uint32_t aiProcessFlags) {
+  if (has_loaded) {
+    return;
+  }
+
+  this->model_path = file_path;
+  this->aiProcessFlags = aiProcessFlags;
   Assimp::Importer importer;
   const aiScene *scene = importer.ReadFile(file_path, aiProcessFlags);
 
@@ -47,8 +121,9 @@ void Model::load(const std::string &file_path, uint32_t aiProcessFlags) {
   root_dir = file_path.substr(0, file_path.find_last_of('/'));
   for (uint32_t i = 0; i < scene->mNumMeshes; ++i) {
     aiMesh *aimesh = scene->mMeshes[i];
-    meshs.push_back(processMesh(aimesh, scene));
+    meshs.push_back(std::move(processMesh(aimesh, scene)));
   }
+  has_loaded = true;
 }
 
 Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {

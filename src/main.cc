@@ -22,7 +22,7 @@
 /* global */
 bool keyboadState[1024];
 std::shared_ptr<ShaderProgram> default_prog;
-std::shared_ptr<Model> nanosuit;
+std::shared_ptr<Model> model;
 // clang-format on
 
 glm::vec3 lightPos(0, 0, 0);
@@ -45,7 +45,7 @@ void init() {
   default_prog = std::make_shared<ShaderProgram>("shaders/default.vert", "shaders/default.frag");
   camera.aspect = (float)windowWidth / windowHeight;
 
-  nanosuit = std::make_shared<Model>("assets/nanosuit/nanosuit.obj");
+  model = std::make_shared<Model>("assets/ちびAppearance_Miku_Ver1_51 - 银色小九尾/ちびAppearanceミクVer1_51小尾巴.pmx");
 
   default_prog->use();
   glEnable(GL_DEPTH_TEST);
@@ -65,7 +65,7 @@ void display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // nanosuit->draw(default_prog);
-  nanosuit->draw(default_prog);
+  model->draw(default_prog);
 }
 
 // main
