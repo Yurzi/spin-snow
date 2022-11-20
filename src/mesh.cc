@@ -1,6 +1,7 @@
 #include "mesh.h"
 #include <iostream>
 #include <string>
+#include <glm/gtc/matrix_transform.hpp>
 
 struct VertexInner {
   glm::vec3 Position;      // 位置向量
@@ -14,6 +15,7 @@ Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indic
   this->indices = indices;
   this->textures = textures;
 
+
   setup();
 }
 
@@ -22,6 +24,10 @@ Mesh::Mesh(const Mesh &oth) {
   this->vertices = oth.vertices;
   this->indices = oth.indices;
   this->textures = oth.textures;
+
+  this->translate = oth.translate;
+  this->rotate = oth.rotate;
+  this->scale = oth.scale;
 
   this->texcoords_layers = oth.texcoords_layers;
   this->has_setup = false;
@@ -33,6 +39,10 @@ Mesh::Mesh(Mesh &&oth) {
   this->vertices = std::move(oth.vertices);
   this->indices = std::move(oth.indices);
   this->textures = std::move(oth.textures);
+
+  this->translate = std::move(oth.translate);
+  this->rotate = std::move(oth.rotate);
+  this->scale = std::move(oth.scale);
 
   this->texcoords_layers = oth.texcoords_layers;
   oth.texcoords_layers = 0;
@@ -58,6 +68,10 @@ Mesh &Mesh::operator=(const Mesh &oth) noexcept {
   this->indices = oth.indices;
   this->textures = oth.textures;
 
+  this->translate = oth.translate;
+  this->rotate = oth.rotate;
+  this->scale = oth.scale;
+
   this->texcoords_layers = oth.texcoords_layers;
   this->has_setup = false;
 
@@ -68,6 +82,10 @@ Mesh &Mesh::operator=(Mesh &&oth) noexcept {
   this->vertices = std::move(oth.vertices);
   this->indices = std::move(oth.indices);
   this->textures = std::move(oth.textures);
+
+  this->translate = std::move(oth.translate);
+  this->rotate = std::move(oth.rotate);
+  this->scale = std::move(oth.scale);
 
   this->texcoords_layers = oth.texcoords_layers;
   oth.texcoords_layers = 0;
@@ -212,8 +230,31 @@ void Mesh::prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_ZERO);
 }
 
-void Mesh::draw(std::shared_ptr<ShaderProgram> shader) noexcept {
+void Mesh::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera) noexcept {
   prepare_draw(shader);
+  if (camera != nullptr) {
+    // 传模型矩阵
+    glm::mat4 unit(1.0f);  // 单位矩阵
+    glm::mat4 scale = glm::scale(unit, this->scale);
+    glm::mat4 translate = glm::translate(unit, this->translate);
+
+    glm::mat4 rotate = unit;  // 旋转
+    rotate = glm::rotate(rotate, glm::radians(this->rotate.x), glm::vec3(1, 0, 0));
+    rotate = glm::rotate(rotate, glm::radians(this->rotate.y), glm::vec3(0, 1, 0));
+    rotate = glm::rotate(rotate, glm::radians(this->rotate.z), glm::vec3(0, 0, 1));
+
+    // 模型变换矩阵
+    glm::mat4 model = translate * rotate * scale;
+    shader->set_unifom("model", model);
+
+    // 计算模型矩阵逆矩阵的转置
+    glm::mat4 NormalMatrix = glm::transpose(glm::inverse(model));
+    shader->set_unifom("NormalMatrix", NormalMatrix);
+
+    shader->set_unifom("view", camera->getViewMatrix());
+    shader->set_unifom("projection", camera->getProjectionMatrix());
+  }
+
   GLuint diffuseNr = 0;
   GLuint specularNr = 0;
   const std::string prefix = "material.";

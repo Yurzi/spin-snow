@@ -9,6 +9,7 @@
 #include <assimp/scene.h>
 #include <unordered_map>
 
+#include "camera.h"
 #include "mesh.h"
 #include "shader.h"
 
@@ -26,7 +27,7 @@ public:
   void load(const std::string &file_path, bool filpUV = true, bool genNormal = true) noexcept;
   void load(const std::string &file_path, uint32_t aiProcessFlags);
   void add_mesh(const Mesh &mesh) noexcept { meshs.push_back(mesh); }
-  void draw(std::shared_ptr<ShaderProgram> shader) noexcept;
+  void draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera) noexcept;
 
 public:
   glm::vec3 translate = glm::vec3(0, 0, 0);

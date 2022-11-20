@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "shader.h"
+#include "camera.h"
 
 const static std::string shader_postion_in = "position";
 const static std::string shader_normal_in = "normal";
@@ -24,7 +25,7 @@ struct Vertex {
   glm::vec3 Position = glm::vec3(0, 0, 0);  // 位置向量
   glm::vec3 Normal = glm::vec3(0, 0, 0);    // 法线
   std::vector<glm::vec2> TexCoords;         // 纹理坐标 assimp 允许一个顶点有多个纹理坐标
-  Vertex(){};
+  Vertex() = default;
   Vertex(glm::vec3 Position, glm::vec3 Normal = {0, 0, 0}, glm::vec2 TexCoord = {0, 0}) {
     this->Position = Position;
     this->Normal = Normal;
@@ -60,13 +61,17 @@ public:
   ~Mesh();
 
   void setup() noexcept;
-  void draw(std::shared_ptr<ShaderProgram> shader) noexcept;
+  void draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera = nullptr) noexcept;
 
 public:
   // 基础数据
   std::vector<Vertex> vertices;   // 顶点
   std::vector<GLuint> indices;    // 索引
   std::vector<Texture> textures;  // 材质
+public:
+  glm::vec3 translate = glm::vec3(0, 0, 0);
+  glm::vec3 rotate = glm::vec3(0, 0, 0);
+  glm::vec3 scale = glm::vec3(1, 1, 1);
 private:
   void prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept;
 

@@ -2,13 +2,22 @@
 #define __CAMERA_H__
 
 #include <glm/glm.hpp>
+#include <stdint.h>
 
 class Camera {
 public:
-  Camera() = default;
+  enum Mode {
+    DefaultAngle = 0x0,
+    EulerAngle = 0x1,
 
-  glm::mat4 getViewMatrix(bool useEulerAngle = true) noexcept;
-  glm::mat4 getProjectionMatrix(bool usePerspective = true) noexcept;
+    Perspective = 0x10,
+    Ortho = 0x11
+  };
+
+public:
+  Camera() = default;
+  glm::mat4 getViewMatrix() noexcept;
+  glm::mat4 getProjectionMatrix() noexcept;
 
 public:
   // 相机参数
@@ -18,6 +27,8 @@ public:
   float pitch = 0.0f, roll = 0.0f, yaw = 0.0f;                 // 欧拉角
   float fovy = 70.0f, aspect = 1.0, zNear = 0.01, zFar = 100;  // 透视投影参数
   float left = -1.0, right = 1.0, top = 1.0, bottom = -1.0;    // 正交投影参数
+public:
+  uint64_t mode = EulerAngle | Perspective;
 };
 
 

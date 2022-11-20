@@ -22,15 +22,17 @@
 /* global */
 bool keyboadState[1024];
 std::shared_ptr<ShaderProgram> default_prog;
-std::shared_ptr<Model> model;
-// clang-format on
+std::shared_ptr<ShaderProgram> dot_light_prog;
 
-glm::vec3 lightPos(0, 0, 0);
+std::shared_ptr<Model> cube;
+std::shared_ptr<Model> cube_light;
+
+glm::vec3 lightPos(2.2f, 2.0f, -4.0f);
 
 int32_t windowWidth = 1024;
 int32_t windowHeight = 720;
 
-Camera camera;
+std::shared_ptr<Camera> camera;
 
 /* functions */
 // callback function for window size changed
@@ -43,29 +45,42 @@ void processInput(GLFWwindow *window);
 // init function
 void init() {
   default_prog = std::make_shared<ShaderProgram>("shaders/default.vert", "shaders/default.frag");
-  camera.aspect = (float)windowWidth / windowHeight;
+  dot_light_prog = std::make_shared<ShaderProgram>("shaders/default.vert", "shaders/dot_light.frag");
 
-  model = std::make_shared<Model>("assets/ちびAppearance_Miku_Ver1_51 - 银色小九尾/ちびAppearanceミクVer1_51小尾巴.pmx");
+  camera = std::make_shared<Camera>();
+  camera->aspect = (float)windowWidth / windowHeight;
+  camera->position = {0, 3, 5};
+
+  // init objects;
+  cube = std::make_shared<Model>("assets/cube.obj");
+  cube_light = std::make_shared<Model>("assets/cube.obj");
+
+  cube_light->scale = {0.2, 0.2, 0.2};
+  cube_light->translate = lightPos;
+
 
   default_prog->use();
+  default_prog->set_unifom("objectColor", {1.0f, 0.5f, 0.31f});
+  default_prog->set_unifom("lightColor", {1.0f, 1.0f, 1.0f});
+
   glEnable(GL_DEPTH_TEST);
 }
 
 void display() {
-  glUniformMatrix4fv(glGetUniformLocation(default_prog->get_id(), "view"), 1, GL_FALSE, glm::value_ptr(camera.getViewMatrix()));
-  glUniformMatrix4fv(
-    glGetUniformLocation(default_prog->get_id(), "projection"), 1, GL_FALSE, glm::value_ptr(camera.getProjectionMatrix()));
-
   // 传递光源位置
-  glUniform3fv(glGetUniformLocation(default_prog->get_id(), "lightPos"), 1, glm::value_ptr(lightPos));
+  default_prog->set_unifom("lightPos", lightPos);
   // 传递相机位置
-  glUniform3fv(glGetUniformLocation(default_prog->get_id(), "cameraPos"), 1, glm::value_ptr(camera.position));
+  default_prog->set_unifom("cameraPos", camera->position);
 
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  /*-----draw objs-------*/
+  default_prog->use();
+  cube->draw(default_prog, camera);
 
-  // nanosuit->draw(default_prog);
-  model->draw(default_prog);
+  dot_light_prog->use();
+  cube_light->translate = lightPos;
+  cube_light->draw(dot_light_prog, camera);
 }
 
 // main
@@ -134,34 +149,34 @@ void processInput(GLFWwindow *window) {
   if (keyboadState[GLFW_KEY_ESCAPE]) {
     glfwSetWindowShouldClose(window, true);
   }
-  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-    camera.position += 0.05f * camera.direction;
+  if (keyboadState[GLFW_KEY_W]) {
+    camera->position += 0.05f * camera->direction;
   }
-  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-    camera.position -= 0.05f * camera.direction;
+  if (keyboadState[GLFW_KEY_S]) {
+    camera->position -= 0.05f * camera->direction;
   }
-  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-    camera.position -= 0.05f * glm::normalize(glm::cross(camera.direction, camera.up));
+  if (keyboadState[GLFW_KEY_A]) {
+    camera->position -= 0.05f * glm::normalize(glm::cross(camera->direction, camera->up));
   }
-  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-    camera.position += 0.05f * glm::normalize(glm::cross(camera.direction, camera.up));
+  if (keyboadState[GLFW_KEY_D]) {
+    camera->position += 0.05f * glm::normalize(glm::cross(camera->direction, camera->up));
   }
 
   if (keyboadState[GLFW_KEY_R])
-    camera.position.y += 0.05f;
+    camera->position.y += 0.05f;
   if (keyboadState[GLFW_KEY_F])
-    camera.position.y -= 0.05f;
+    camera->position.y -= 0.05f;
 
-  if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+  if (keyboadState[GLFW_KEY_I]) {
     lightPos.z -= 0.05f;
   }
-  if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+  if (keyboadState[GLFW_KEY_K]) {
     lightPos.z += 0.05f;
   }
-  if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+  if (keyboadState[GLFW_KEY_J]) {
     lightPos.x -= 0.05f;
   }
-  if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+  if (keyboadState[GLFW_KEY_L]) {
     lightPos.x += 0.05f;
   }
   if (keyboadState[GLFW_KEY_U])
@@ -183,10 +198,10 @@ void mouse_move_callback(GLFWwindow *window, double x, double y) {
   xoffset *= sensitivity;
   yoffset *= sensitivity;
 
-  camera.yaw += xoffset;
-  camera.pitch += yoffset;
+  camera->yaw += xoffset;
+  camera->pitch += yoffset;
 
-  camera.pitch = glm::clamp(camera.pitch, -89.0f, 89.0f);
+  camera->pitch = glm::clamp(camera->pitch, -89.0f, 89.0f);
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {}

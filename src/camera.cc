@@ -5,8 +5,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-glm::mat4 Camera::getViewMatrix(bool useEulerAngle) noexcept {
-  if (useEulerAngle)  // 使用欧拉角更新相机朝向
+glm::mat4 Camera::getViewMatrix() noexcept {
+  if (mode & Mode::EulerAngle)  // 使用欧拉角更新相机朝向
   {
     direction.x = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
     direction.y = sin(glm::radians(pitch));
@@ -14,8 +14,8 @@ glm::mat4 Camera::getViewMatrix(bool useEulerAngle) noexcept {
   }
   return glm::lookAt(position, position + direction, up);
 }
-glm::mat4 Camera::getProjectionMatrix(bool usePerspective) noexcept {
-  if (usePerspective)  // 透视投影
+glm::mat4 Camera::getProjectionMatrix() noexcept {
+  if (mode & Mode::Perspective)  // 透视投影
   {
     return glm::perspective(glm::radians(fovy), aspect, zNear, zFar);
   }

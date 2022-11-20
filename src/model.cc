@@ -176,7 +176,7 @@ Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {
   return std::move(Mesh(vertices, indices, textures));
 }
 
-void Model::draw(std::shared_ptr<ShaderProgram> shader) noexcept {
+void Model::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera) noexcept {
   // 传模型矩阵
   glm::mat4 unit(1.0f);  // 单位矩阵
   glm::mat4 scale = glm::scale(unit, this->scale);
@@ -189,13 +189,14 @@ void Model::draw(std::shared_ptr<ShaderProgram> shader) noexcept {
 
   // 模型变换矩阵
   glm::mat4 model = translate * rotate * scale;
-  GLuint mlocation = glGetUniformLocation(shader->get_id(), "model");  // 名为model的uniform变量的位置索引
-  glUniformMatrix4fv(mlocation, 1, GL_FALSE, glm::value_ptr(model));   // 列优先矩阵
+  shader->set_unifom("model", model);
 
   // 计算模型矩阵逆矩阵的转置
-  glm::mat4 TinverseModel = glm::transpose(glm::inverse(model));
-  GLuint timlocation = glGetUniformLocation(shader->get_id(), "TinverseModel");
-  glUniformMatrix4fv(timlocation, 1, GL_FALSE, glm::value_ptr(TinverseModel));
+  glm::mat4 NormalMatrix = glm::transpose(glm::inverse(model));
+  shader->set_unifom("NormalMatrix", NormalMatrix);
+
+  shader->set_unifom("view", camera->getViewMatrix());
+  shader->set_unifom("projection", camera->getProjectionMatrix());
 
   for (uint32_t i = 0; i < meshs.size(); ++i) {
     meshs[i].draw(shader);

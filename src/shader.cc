@@ -1,6 +1,7 @@
 #include "shader.h"
 
 #include <glad/glad.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <memory>
 #include <ostream>
@@ -136,6 +137,15 @@ void ShaderProgram::set_unifom(const std::string_view &name, GLint value) const 
 }
 void ShaderProgram::set_unifom(const std::string_view &name, GLfloat value) const noexcept {
   glUniform1f(glGetUniformLocation(this->m_id, name.data()), value);
+}
+void ShaderProgram::set_unifom(const std::string_view &name, const glm::vec3 &value) const noexcept {
+  glUniform3fv(glGetUniformLocation(this->m_id, name.data()), 1, glm::value_ptr(value));
+}
+void ShaderProgram::set_unifom(const std::string_view &name, const glm::vec4 &value) const noexcept {
+  glUniform4fv(glGetUniformLocation(this->m_id, name.data()), 1, glm::value_ptr(value));
+}
+void ShaderProgram::set_unifom(const std::string_view &name, const glm::mat4 &value) const noexcept {
+  glUniformMatrix4fv(glGetUniformLocation(this->m_id, name.data()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void ShaderProgram::use() const noexcept { glUseProgram(this->m_id); }
