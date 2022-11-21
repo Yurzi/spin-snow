@@ -26,7 +26,7 @@ GLuint Texture2DFromFile(const std::string &file_path, GLenum wrapMode, GLenum m
       format = GL_RGBA;
       break;
     default:
-      format = GL_RGB;
+      format = GL_RGBA;
     }
 
     glGenTextures(1, &texture_id);
@@ -85,7 +85,7 @@ GLuint Texture2DFromAssimp(const aiTexture *aitexture, GLenum wrapMode, GLenum m
       format = GL_RGBA;
       break;
     default:
-      format = GL_RGB;
+      format = GL_RGBA;
     }
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -189,14 +189,20 @@ GLuint Texture2DForShadowMap(
 }
 
 
-GLuint CubeMapFromFile(const std::string &file_path, GLenum wrapMode, GLenum magFilterMode, GLenum minFilterMode) noexcept {
+GLuint CubeMapFromFile(const std::vector<std::string> &file_path,
+                       GLenum wrapMode,
+                       GLenum magFilterMode,
+                       GLenum minFilterMode) noexcept {
   GLuint texture_id;
 
   int32_t width, height, nrChannels;
   //  stbi_set_flip_vertically_on_load(true);
-  unsigned char *data = stbi_load(file_path.c_str(), &width, &height, &nrChannels, 0);
+  unsigned char *data[6] = {nullptr};
+  for (int32_t i = 0; i < file_path.size(); ++i) {
+    data[i] = stbi_load(file_path[i].c_str(), &width, &height, &nrChannels, 0);
+  }
 
-  if (data != nullptr) {
+  if (data[0] != nullptr) {
     GLenum format;
     switch (nrChannels) {
     case 1:
@@ -209,7 +215,7 @@ GLuint CubeMapFromFile(const std::string &file_path, GLenum wrapMode, GLenum mag
       format = GL_RGBA;
       break;
     default:
-      format = GL_RGB;
+      format = GL_RGBA;
     }
 
     glGenTextures(1, &texture_id);
@@ -222,14 +228,18 @@ GLuint CubeMapFromFile(const std::string &file_path, GLenum wrapMode, GLenum mag
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, minFilterMode);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, magFilterMode);
 
-    glTexImage2D(GL_TEXTURE_CUBE_MAP, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    for (int32_t i = 0; i < file_path.size(); ++i) {
+      glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data[i]);
+      if (data[i]) {
+        stbi_image_free(data[i]);
+      }
+    }
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-    stbi_image_free(data);
     glBindTexture(GL_TEXTURE_CUBE_MAP, GL_ZERO);
 
   } else {
-    std::cout << "[ERROR::Utils::CubeMapFromFile] Failed to load texture at path: " << file_path << std::endl;
+    std::cout << "[ERROR::Utils::CubeMapFromFile] Failed to load texture" << std::endl;
     std::cout << "not a absolate path or file not exists" << std::endl;
   }
 

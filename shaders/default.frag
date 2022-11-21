@@ -81,12 +81,13 @@ float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos) {
   light_view_pos = light_view_pos * 0.5 + 0.5;
 
   float closetDepth = texture(tex, light_view_pos.xy).r;
-  closetDepth = linearize_depth(closetDepth, shadow_zNear, shadow_zFar) / shadow_zFar;
-  float currentDepth = linearize_depth(light_view_pos.z, shadow_zNear, shadow_zFar) / shadow_zFar;
+  //closetDepth = linearize_depth(closetDepth, shadow_zNear, shadow_zFar) / shadow_zFar;
+  float currentDepth = light_view_pos.z;
+  //currentDepth = linearize_depth(light_view_pos.z, shadow_zNear, shadow_zFar) / shadow_zFar;
   float bias = 0.005;
   float shadow = (currentDepth > closetDepth + bias) ? (1.0) : (0.0);
 
-  if (light_view_pos.z > 1.0) {
+  if (light_view_pos.z > 1) {
     shadow = 0.0;
   }
   return shadow;
@@ -94,7 +95,7 @@ float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos) {
 
 void main() {
   fColor = texture(textures.diffuse0, texcoordOut0);
-
   float shadow = shadowMapping(textures.shadow0, shadowVP, vec4(worldPos, 1.0f));
-    fColor.rgb = blinn_phong(worldPos, cameraPos, normalOut, convert_from_texture(textures, texcoordOut0, 32), light, shadow);
+  shadow = min(shadow, 0.75);
+  fColor.rgb = blinn_phong(worldPos, cameraPos, normalOut, convert_from_texture(textures, texcoordOut0, 32), light, shadow);
 }

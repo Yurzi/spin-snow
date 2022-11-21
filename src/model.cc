@@ -224,9 +224,6 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
     material->GetTexture(type, i, &str);
     std::string texture_path = str.C_Str();
     int64_t last_slash_pos = texture_path.find_last_of('/');
-    if (last_slash_pos != std::string::npos) {
-      texture_path = texture_path.substr(last_slash_pos);
-    }
     texture_path = root_dir + '/' + texture_path;
 
     // 检查是否已经加载
@@ -235,9 +232,9 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
       Texture texture;
       const aiTexture *aitexture = scene->GetEmbeddedTexture(texture_path.c_str());
       if (aitexture != nullptr) {
-        texture.id = Texture2DFromAssimp(aitexture);
+        texture.id = Texture2DFromAssimp(aitexture, GL_CLAMP_TO_EDGE);
       } else {
-        texture.id = Texture2DFromFile(texture_path);
+        texture.id = Texture2DFromFile(texture_path, GL_CLAMP_TO_EDGE);
       }
 
       texture.type = convert_from_aiTextureType(type);

@@ -34,8 +34,10 @@ std::shared_ptr<Model> skybox;
 
 std::shared_ptr<Mesh> ground;
 std::shared_ptr<Mesh> screen;
-Light light;
+std::shared_ptr<Mesh> grass;
 
+Light light;
+Texture skybox_tex;
 
 int32_t windowWidth = 1024;
 int32_t windowHeight = 720;
@@ -70,12 +72,13 @@ void init() {
   camera->position = {0, 3, 5};
 
   // init light
-  light.position = glm::vec3(2.2f, 2.0f, -4.0f);
+  light.position = glm::vec3(3.0f, 20.0f, 10.0f);
   light.type = Light::PointLight;
+  light.ambient = {0.45, 0.45, 0.45};
   light.diffuse = {(float)218 / 255, (float)218 / 255, (float)192 / 255};
 
   // init objects;
-  model = std::make_shared<Model>("assets/ちびAppearance_Miku_Ver1_51 - 银色小九尾/ちびAppearanceミクVer1_51小尾巴.pmx");
+  model = std::make_shared<Model>("assets/naheida/纳西妲.pmx");
   cube_light = std::make_shared<Model>("assets/cube.obj");
   skybox = std::make_shared<Model>("assets/cube.obj");
   ground = std::make_shared<Mesh>();
@@ -87,13 +90,14 @@ void init() {
     {  {1, 1, 0}, {0, 1, 0}, {1, 1}}
   };
   ground->vertices = {
-    {{-1, 0, -1}, {0, 1, 0}, {0, 1}},
-    { {-1, 0, 1}, {0, 1, 0}, {0, 0}},
-    {  {1, 0, 1}, {0, 1, 0}, {1, 0}},
-    { {1, 0, -1}, {0, 1, 0}, {1, 1}}
+    {{-1, 0, -1}, {0, 1, 0}, {0, 0}},
+    { {1, 0, -1}, {0, 1, 0}, {1, 0}},
+    { {-1, 0, 1}, {0, 1, 0}, {0, 1}},
+    {  {1, 0, 1}, {0, 1, 0}, {1, 1}}
   };
-  ground->indices = {0, 1, 2, 0, 3, 2};
+  ground->indices = {0, 1, 2, 2, 1, 3};
   screen->indices = {0, 1, 2, 2, 1, 3};
+  grass = std::make_shared<Mesh>(*screen);
   ground->setup();
   screen->setup();
 
@@ -107,18 +111,37 @@ void init() {
   texture.id = Texture2DFromUChar(nullptr);
   ground->add_texture(texture);
 
+  std::vector<std::string> files = {
+    "assets/skybox/right.jpg",
+    "assets/skybox/left.jpg",
+    "assets/skybox/top.jpg",
+    "assets/skybox/bottom.jpg",
+    "assets/skybox/front.jpg",
+    "assets/skybox/back.jpg",
+  };
+  skybox_tex.id = CubeMapFromFile(files);
+
+  texture.type = Texture::diffuse;
+  texture.path = "assets/nya.png";
+  stbi_set_flip_vertically_on_load(true);
+  texture.id = Texture2DFromFile(texture.path);
+  stbi_set_flip_vertically_on_load(false);
+  grass->add_texture(texture);
+
+
   // shadow
   shadow_camera = std::make_shared<Camera>();
-  shadow_camera->mode = Camera::DefaultAngle | Camera::Perspective;
+  shadow_camera->mode = Camera::DefaultAngle | Camera::Ortho;
   shadow_camera->left = -25;
   shadow_camera->right = 25;
   shadow_camera->bottom = -25;
   shadow_camera->top = 25;
   shadow_camera->position = light.position;
+  shadow_camera->fovy = 120;
 
   glGenFramebuffers(1, &shadowMapFBO);
   shadowTexture.type = Texture::shadow;
-  shadowTexture.id = Texture2DForShadowMap(shadowMapResolution, shadowMapResolution);
+  shadowTexture.id = Texture2DForShadowMap(shadowMapResolution, shadowMapResolution, GL_CLAMP_TO_BORDER);
   glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture.id, 0);
   glDrawBuffer(GL_NONE);
@@ -130,13 +153,18 @@ void init() {
   cube_light->scale = {0.2, 0.2, 0.2};
   cube_light->translate = light.position;
 
+  grass->translate = {10, 1, 0};
+
   ground->add_texture(shadowTexture);
   model->add_texture(shadowTexture);
   screen->add_texture(shadowTexture);
+  grass->add_texture(shadowTexture);
 
   default_prog->use();
 
   glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void display() {
@@ -162,11 +190,22 @@ void display() {
   glViewport(0, 0, shadowMapResolution, shadowMapResolution);
   model->draw(shadow_prog, shadow_camera);
   ground->draw(shadow_prog, shadow_camera);
+  grass->draw(shadow_prog, shadow_camera);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // default draw
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, windowWidth, windowHeight);
+
+  skybox_prog->use();
+  glActiveTexture(GL_TEXTURE16);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_tex.id);
+  skybox_prog->set_uniform("skybox", 16);
+
+  skybox->translate = camera->position;
+  glDepthMask(GL_FALSE);
+  skybox->draw(skybox_prog, camera);
+  glDepthMask(GL_TRUE);
 
   dot_light_prog->use();
   cube_light->translate = light.position;
@@ -177,12 +216,14 @@ void display() {
 
   model->draw(default_prog, camera);
   ground->draw(default_prog, camera);
-
-  //  debug->use();
-  //  glDisable(GL_DEPTH_TEST);
-  //  glViewport(0, 0, windowWidth / 3, windowHeight / 3);
-  //  screen->draw(debug);
-  //  glEnable(GL_DEPTH_TEST);
+  grass->draw(default_prog, camera);
+  /*
+    debug->use();
+    glDisable(GL_DEPTH_TEST);
+    glViewport(0, 0, windowWidth / 3, windowHeight / 3);
+    screen->draw(debug);
+    glEnable(GL_DEPTH_TEST);
+      */
 }
 
 // main

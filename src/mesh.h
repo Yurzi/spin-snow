@@ -71,7 +71,7 @@ public:
   std::vector<Texture> textures;  // 材质
 public:
   glm::vec3 translate = glm::vec3(0, 0, 0);
-  glm::vec3 rotate = glm::vec3(0, 0, 0);
+  glm::vec3 rotate = glm::vec3(0, 0, 0);  // 角度制
   glm::vec3 scale = glm::vec3(1, 1, 1);
 
 private:
