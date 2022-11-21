@@ -23,6 +23,7 @@ const static std::string shader_texcoord_prefix_in = "texcoord";
  * texcoordN 纹理坐标
  */
 struct Vertex {
+  typedef std::shared_ptr<Vertex> Ptr;
   glm::vec3 Position = glm::vec3(0, 0, 0);  // 位置向量
   glm::vec3 Normal = glm::vec3(0, 0, 0);    // 法线
   std::vector<glm::vec2> TexCoords;         // 纹理坐标 assimp 允许一个顶点有多个纹理坐标
@@ -41,6 +42,7 @@ struct Vertex {
  * 阴影纹理：textures.shadowN; N>=0;
  */
 struct Texture {
+  typedef std::shared_ptr<Texture> Ptr;
   enum Type { unknown=0x0, diffuse = 0x1, specular = 0x2, shadow = 0x10 };
   GLuint id;                                               // 材质id
   Type type;                                               // 材质类型
@@ -57,6 +59,7 @@ struct Texture {
 
 class Mesh {
 public:
+  typedef std::shared_ptr<Mesh> Ptr;
   // 方法
   Mesh(){};
   Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices, const std::vector<Texture> &textures);
@@ -67,7 +70,7 @@ public:
   ~Mesh();
 
   void setup() noexcept;
-  void draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera = nullptr) noexcept;
+  void draw(ShaderProgram::Ptr shader, Camera::Ptr camera = nullptr) noexcept;
 
   void add_texture(const Texture &texture) noexcept;
 
@@ -82,7 +85,7 @@ public:
   glm::vec3 scale = glm::vec3(1, 1, 1);
 
 private:
-  void prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept;
+  void prepare_draw(ShaderProgram::Ptr shader) noexcept;
 
 private:
   // 一些网格参数

@@ -18,20 +18,20 @@
 #include "utils.h"
 
 /* global */
-bool keyboadState[1024];
-std::shared_ptr<ShaderProgram> default_prog;
-std::shared_ptr<ShaderProgram> shadow_prog;
-std::shared_ptr<ShaderProgram> debug;
-std::shared_ptr<ShaderProgram> dot_light_prog;
-std::shared_ptr<ShaderProgram> skybox_prog;
+bool keyboardState[1024];
+ShaderProgram::Ptr default_prog;
+ShaderProgram::Ptr shadow_prog;
+ShaderProgram::Ptr debug;
+ShaderProgram::Ptr dot_light_prog;
+ShaderProgram::Ptr skybox_prog;
 
-std::shared_ptr<Model> model;
-std::shared_ptr<Model> cube_light;
-std::shared_ptr<Model> skybox;
+Model::Ptr model;
+Model::Ptr cube_light;
+Model::Ptr skybox;
 
-std::shared_ptr<Mesh> ground;
-std::shared_ptr<Mesh> screen;
-std::shared_ptr<Mesh> grass;
+Mesh::Ptr ground;
+Mesh::Ptr screen;
+Mesh::Ptr grass;
 
 Light light;
 Texture skybox_tex(Texture::unknown);
@@ -39,8 +39,8 @@ Texture skybox_tex(Texture::unknown);
 int32_t windowWidth = 1024;
 int32_t windowHeight = 720;
 
-std::shared_ptr<Camera> camera;
-std::shared_ptr<Camera> shadow_camera;
+Camera::Ptr camera;
+Camera::Ptr shadow_camera;
 
 int32_t shadowMapResolution = 16384;
 GLuint shadowMapFBO;
@@ -100,7 +100,7 @@ void init() {
 
   // texture init
   ground->add_texture(Texture("assets/wall.jpg", Texture::diffuse));
-  ground->add_texture(Texture(Texture::specular,Texture2DFromUChar(nullptr)));
+  ground->add_texture(Texture(Texture::specular, Texture2DFromUChar(nullptr)));
 
   std::vector<std::string> files = {
     "assets/skybox/right.jpg",
@@ -202,11 +202,11 @@ void display() {
   ground->draw(default_prog, camera);
   grass->draw(default_prog, camera);
   debug->use();
-//  glDisable(GL_DEPTH_TEST);
-//  glViewport(0, 0, windowWidth / 3, windowHeight / 3);
-//  screen->draw(debug);
-//  glEnable(GL_DEPTH_TEST);
-//  glDisable(GL_BLEND);
+  //  glDisable(GL_DEPTH_TEST);
+  //  glViewport(0, 0, windowWidth / 3, windowHeight / 3);
+  //  screen->draw(debug);
+  //  glEnable(GL_DEPTH_TEST);
+  //  glDisable(GL_BLEND);
 }
 
 // main
@@ -272,42 +272,42 @@ void frambuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height)
 }
 // process user input
 void processInput(GLFWwindow *window) {
-  if (keyboadState[GLFW_KEY_ESCAPE]) {
+  if (keyboardState[GLFW_KEY_ESCAPE]) {
     glfwSetWindowShouldClose(window, true);
   }
-  if (keyboadState[GLFW_KEY_W]) {
+  if (keyboardState[GLFW_KEY_W]) {
     camera->position += 0.05f * camera->direction;
   }
-  if (keyboadState[GLFW_KEY_S]) {
+  if (keyboardState[GLFW_KEY_S]) {
     camera->position -= 0.05f * camera->direction;
   }
-  if (keyboadState[GLFW_KEY_A]) {
+  if (keyboardState[GLFW_KEY_A]) {
     camera->position -= 0.05f * glm::normalize(glm::cross(camera->direction, camera->up));
   }
-  if (keyboadState[GLFW_KEY_D]) {
+  if (keyboardState[GLFW_KEY_D]) {
     camera->position += 0.05f * glm::normalize(glm::cross(camera->direction, camera->up));
   }
 
-  if (keyboadState[GLFW_KEY_R])
+  if (keyboardState[GLFW_KEY_R])
     camera->position.y += 0.05f;
-  if (keyboadState[GLFW_KEY_F])
+  if (keyboardState[GLFW_KEY_F])
     camera->position.y -= 0.05f;
 
-  if (keyboadState[GLFW_KEY_I]) {
+  if (keyboardState[GLFW_KEY_I]) {
     light.position.z -= 0.05f;
   }
-  if (keyboadState[GLFW_KEY_K]) {
+  if (keyboardState[GLFW_KEY_K]) {
     light.position.z += 0.05f;
   }
-  if (keyboadState[GLFW_KEY_J]) {
+  if (keyboardState[GLFW_KEY_J]) {
     light.position.x -= 0.05f;
   }
-  if (keyboadState[GLFW_KEY_L]) {
+  if (keyboardState[GLFW_KEY_L]) {
     light.position.x += 0.05f;
   }
-  if (keyboadState[GLFW_KEY_U])
+  if (keyboardState[GLFW_KEY_U])
     light.position.y += 0.05f;
-  if (keyboadState[GLFW_KEY_H])
+  if (keyboardState[GLFW_KEY_H])
     light.position.y -= 0.05f;
 }
 
@@ -333,5 +333,5 @@ void mouse_move_callback(GLFWwindow *window, double x, double y) {
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {}
 
 void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
-  keyboadState[key] = (action == GLFW_PRESS || action == GLFW_REPEAT) ? true : false;
+  keyboardState[key] = (action == GLFW_PRESS || action == GLFW_REPEAT) ? true : false;
 }

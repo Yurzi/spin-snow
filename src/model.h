@@ -16,6 +16,8 @@
 
 class Model {
 public:
+  typedef std::shared_ptr<Model> Ptr;
+  
   Model(){};
   Model(const std::string &file_path) { load(file_path); }
   Model(const Model &oth);
@@ -24,9 +26,9 @@ public:
   Model &operator=(Model &&oth) noexcept;
   ~Model();
 
-  void load(const std::string &file_path, bool filpUV = true, bool genNormal = true) noexcept;
+  void load(const std::string &file_path, bool flipUV = true, bool genNormal = true) noexcept;
   void load(const std::string &file_path, uint32_t aiProcessFlags);
-  void draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera) noexcept;
+  void draw(ShaderProgram::Ptr shader, Camera::Ptr camera) noexcept;
 
   void add_mesh(const Mesh &mesh) noexcept { meshs.push_back(mesh); }
   void add_texture(Texture &texture, bool is_move = false) noexcept;

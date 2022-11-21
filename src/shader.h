@@ -16,6 +16,7 @@
 
 class Shader {
 public:
+  typedef std::shared_ptr<Shader> Ptr;
   explicit Shader(const std::string_view &src_path);
   ~Shader();
 
@@ -33,18 +34,21 @@ protected:
 
 class VertexShader : public Shader {
 public:
+  typedef std::shared_ptr<VertexShader> Ptr;
   explicit VertexShader(const std::string_view &src_path);
 };
 
 class FragmentShader : public Shader {
 public:
+  typedef std::shared_ptr<FragmentShader> Ptr;
   explicit FragmentShader(const std::string_view &src_path);
 };
 
 class ShaderProgram {
 public:
+  typedef std::shared_ptr<ShaderProgram> Ptr;
   explicit ShaderProgram(const std::string_view &vertex_shader_filename, const std::string_view &fragement_shader_filename);
-  explicit ShaderProgram(const std::vector<std::shared_ptr<Shader>> &shaders);
+  explicit ShaderProgram(const std::vector<Shader::Ptr> &shaders);
 
   ~ShaderProgram();
 
@@ -63,7 +67,7 @@ public:
   void set_material(const std::string_view &name, const Material& value) const noexcept;
 
 private:
-  void init(const std::vector<std::shared_ptr<Shader>> &shaders) noexcept;
+  void init(const std::vector<Shader::Ptr> &shaders) noexcept;
 
 private:
   GLuint m_id;

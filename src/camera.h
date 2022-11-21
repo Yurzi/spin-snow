@@ -4,8 +4,12 @@
 #include <glm/glm.hpp>
 #include <stdint.h>
 
+#include <memory>
+
 class Camera {
 public:
+  typedef std::shared_ptr<Camera> Ptr;
+
   enum Mode {
     DefaultAngle = 0x0,
     EulerAngle = 0x1,

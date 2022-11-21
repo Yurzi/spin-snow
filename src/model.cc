@@ -90,12 +90,12 @@ Model::~Model() {
   glDeleteTextures(textures_to_del.size(), textures_to_del.data());
 }
 
-void Model::load(const std::string &file_path, bool filpUV, bool genNormal) noexcept {
+void Model::load(const std::string &file_path, bool flipUV, bool genNormal) noexcept {
   if (has_loaded) {
     return;
   }
   uint32_t pFlags = aiProcess_Triangulate;
-  if (filpUV)
+  if (flipUV)
     pFlags |= aiProcess_FlipUVs;
   if (genNormal)
     pFlags |= aiProcess_GenSmoothNormals;
@@ -173,7 +173,7 @@ Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {
   return std::move(Mesh(vertices, indices, textures));
 }
 
-void Model::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera) noexcept {
+void Model::draw(ShaderProgram::Ptr shader, Camera::Ptr camera) noexcept {
   // 传模型矩阵
   glm::mat4 unit(1.0f);  // 单位矩阵
   glm::mat4 scale = glm::scale(unit, this->scale);

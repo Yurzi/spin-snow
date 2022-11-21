@@ -53,18 +53,18 @@ GLuint Texture2DFromFile(const std::string &file_path, GLenum wrapMode, GLenum m
 }
 
 
-GLuint Texture2DFromAssimp(const aiTexture *aitexture, GLenum wrapMode, GLenum magFilterMode, GLenum minFilterMode) noexcept {
-  if (aitexture == nullptr)
+GLuint Texture2DFromAssimp(const aiTexture *ai_texture, GLenum wrapMode, GLenum magFilterMode, GLenum minFilterMode) noexcept {
+  if (ai_texture == nullptr)
     return GL_ZERO;
 
   int32_t width, height, nrChannels;
   unsigned char *data = nullptr;
-  if (aitexture->mHeight == 0) {
+  if (ai_texture->mHeight == 0) {
     data = stbi_load_from_memory(
-      reinterpret_cast<unsigned char *>(aitexture->pcData), aitexture->mWidth, &width, &height, &nrChannels, 0);
+      reinterpret_cast<unsigned char *>(ai_texture->pcData), ai_texture->mWidth, &width, &height, &nrChannels, 0);
   } else {
-    data = stbi_load_from_memory(reinterpret_cast<unsigned char *>(aitexture->pcData),
-                                 aitexture->mWidth * aitexture->mHeight,
+    data = stbi_load_from_memory(reinterpret_cast<unsigned char *>(ai_texture->pcData),
+                                 ai_texture->mWidth * ai_texture->mHeight,
                                  &width,
                                  &height,
                                  &nrChannels,

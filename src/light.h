@@ -4,7 +4,11 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include <memory>
+
 struct Light {
+  typedef std::shared_ptr<Light> Ptr;
+
   enum Type { SunLight = 0x0, PointLight = 0x1, SpotLight = 0x2, FlashLight = 0x4 };
   Type type = Type::PointLight;
   glm::vec3 position = {0, 0, 0};

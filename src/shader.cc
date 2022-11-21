@@ -14,7 +14,7 @@
 #include <string_view>
 
 Shader::Shader(const std::string_view &src_path) : m_id(GL_ZERO) {
-  // read the source into 'm_src'
+  // read the source into "m_src"
   std::ifstream fd;
   std::stringstream ss;
   try {
@@ -94,9 +94,9 @@ FragmentShader::FragmentShader(const std::string_view &src_path) : Shader(src_pa
 
 ShaderProgram::ShaderProgram(const std::string_view &vertex_shader_filename,
                              const std::string_view &fragement_shader_filename) {
-  std::vector<std::shared_ptr<Shader>> shaders;
-  std::shared_ptr<Shader> vertex_shader = std::make_shared<VertexShader>(vertex_shader_filename);
-  std::shared_ptr<Shader> fragement_shader = std::make_shared<FragmentShader>(fragement_shader_filename);
+  std::vector<Shader::Ptr> shaders;
+  Shader::Ptr vertex_shader = std::make_shared<VertexShader>(vertex_shader_filename);
+  Shader::Ptr fragement_shader = std::make_shared<FragmentShader>(fragement_shader_filename);
   if (vertex_shader->get_status()) {
     shaders.push_back(vertex_shader);
   }
@@ -107,9 +107,9 @@ ShaderProgram::ShaderProgram(const std::string_view &vertex_shader_filename,
   this->init(shaders);
 }
 
-ShaderProgram::ShaderProgram(const std::vector<std::shared_ptr<Shader>> &shaders) { this->init(shaders); }
+ShaderProgram::ShaderProgram(const std::vector<Shader::Ptr> &shaders) { this->init(shaders); }
 
-void ShaderProgram::init(const std::vector<std::shared_ptr<Shader>> &shaders) noexcept {
+void ShaderProgram::init(const std::vector<Shader::Ptr> &shaders) noexcept {
   this->m_id = glCreateProgram();
   for (auto idx : shaders) {
     glAttachShader(this->m_id, idx->get_id());

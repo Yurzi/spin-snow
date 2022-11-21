@@ -14,7 +14,7 @@ GLuint Texture2DFromFile(const std::string &file_path,
                          GLenum magFilterMode = GL_LINEAR,
                          GLenum minFilterMode = GL_LINEAR_MIPMAP_LINEAR) noexcept;
 
-GLuint Texture2DFromAssimp(const aiTexture *aitexture,
+GLuint Texture2DFromAssimp(const aiTexture *ai_texture,
                            GLenum wrapMode = GL_REPEAT,
                            GLenum magFilterMode = GL_LINEAR,
                            GLenum minFilterMode = GL_LINEAR_MIPMAP_LINEAR) noexcept;

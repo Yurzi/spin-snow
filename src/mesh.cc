@@ -200,7 +200,7 @@ void Mesh::setup() noexcept {
   this->has_setup = true;
 }
 
-void Mesh::prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept {
+void Mesh::prepare_draw(ShaderProgram::Ptr shader) noexcept {
   // O(1) check
   if (shader->get_id() == this->current_shader) {
     return;
@@ -256,7 +256,7 @@ void Mesh::prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_ZERO);
 }
 
-void Mesh::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera) noexcept {
+void Mesh::draw(ShaderProgram::Ptr shader, Camera::Ptr camera) noexcept {
   shader->use();
   prepare_draw(shader);
   if (camera != nullptr) {
