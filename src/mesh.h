@@ -8,8 +8,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include "shader.h"
 #include "camera.h"
+#include "shader.h"
+
 
 const static std::string shader_postion_in = "position";
 const static std::string shader_normal_in = "normal";
@@ -35,17 +36,15 @@ struct Vertex {
 
 /** 材质
  * 对于着色器中材质变量的命名方式为
- * 漫反射纹理：material.texture_diffuseN; N >= 0;
- * 镜面反射纹理: material.texture_specularN; N >=0;
+ * 漫反射纹理：textures.diffuseN; N >= 0;
+ * 镜面反射纹理: textures.specularN; N >=0;
+ * 阴影纹理：textures.shadowN; N>=0;
  */
 struct Texture {
-  enum Type {
-    diffuse = 0,
-    specular = 1,
-  };
-  GLuint id;         // 材质id
-  Type type;         // 材质类型
-  std::string path;  // 纹理文件的位置
+  enum Type { diffuse = 0x0, specular = 0x1, shadow = 0x10 };
+  GLuint id;                                              // 材质id
+  Type type;                                              // 材质类型
+  std::string path = "<**{YURZI::BUILT-IN::TEXTURE}**>";  // 纹理文件的位置
 };
 
 
@@ -63,6 +62,8 @@ public:
   void setup() noexcept;
   void draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera = nullptr) noexcept;
 
+  void add_texture(const Texture &texture) noexcept;
+
 public:
   // 基础数据
   std::vector<Vertex> vertices;   // 顶点
@@ -72,6 +73,7 @@ public:
   glm::vec3 translate = glm::vec3(0, 0, 0);
   glm::vec3 rotate = glm::vec3(0, 0, 0);
   glm::vec3 scale = glm::vec3(1, 1, 1);
+
 private:
   void prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept;
 

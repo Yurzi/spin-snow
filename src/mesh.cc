@@ -1,7 +1,8 @@
 #include "mesh.h"
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <string>
-#include <glm/gtc/matrix_transform.hpp>
+
 
 struct VertexInner {
   glm::vec3 Position;      // 位置向量
@@ -257,7 +258,8 @@ void Mesh::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> c
 
   GLuint diffuseNr = 0;
   GLuint specularNr = 0;
-  const std::string prefix = "material.";
+  GLuint shadowNr = 0;
+  const std::string prefix = "textures.";
 
   for (GLint i = 0; i < textures.size(); ++i) {
     glActiveTexture(GL_TEXTURE0 + i);
@@ -265,11 +267,14 @@ void Mesh::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> c
     std::string name;
 
     if (textures[i].type == Texture::diffuse) {
-      name = "texture_diffuse";
+      name = "diffuse";
       number = std::to_string(diffuseNr++);
     } else if (textures[i].type == Texture::specular) {
-      name = "texture_specular";
+      name = "specular";
       number = std::to_string(specularNr++);
+    } else if (textures[i].type == Texture::shadow) {
+      name = "shadow";
+      number = std::to_string(shadowNr++);
     }
     glBindTexture(GL_TEXTURE_2D, textures[i].id);
     shader->set_uniform(prefix + name + number, i);
@@ -282,3 +287,5 @@ void Mesh::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> c
   glBindVertexArray(GL_ZERO);
   glBindTexture(GL_TEXTURE_2D, GL_ZERO);
 }
+
+void Mesh::add_texture(const Texture &texture) noexcept { textures.push_back(texture); }

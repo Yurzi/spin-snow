@@ -259,9 +259,22 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
       texture.path = default_texture_path;
       textures_tmp.push_back(texture);
       texture_loaded.insert(std::pair<std::string, Texture>(texture.path, texture));
-    }else {
+    } else {
       textures_tmp.push_back(texture_loaded.find(default_texture_path)->second);
     }
   }
   return textures_tmp;
+}
+
+void Model::add_texture(Texture &texture, bool is_move) noexcept {
+  for (auto &i : meshs) {
+    i.add_texture(texture);
+  }
+
+  if (is_move) {
+    // move the control of texture to this model
+    texture_loaded.insert(std::pair<std::string, Texture>(texture.path, texture));
+    texture.id = GL_ZERO;
+    texture.path = "";
+  }
 }

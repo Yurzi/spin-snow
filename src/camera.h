@@ -11,7 +11,7 @@ public:
     EulerAngle = 0x1,
 
     Perspective = 0x10,
-    Ortho = 0x11
+    Ortho = 0x20
   };
 
 public:
