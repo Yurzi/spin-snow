@@ -41,10 +41,17 @@ struct Vertex {
  * 阴影纹理：textures.shadowN; N>=0;
  */
 struct Texture {
-  enum Type { diffuse = 0x0, specular = 0x1, shadow = 0x10 };
-  GLuint id;                                              // 材质id
-  Type type;                                              // 材质类型
-  std::string path = "<**{YURZI::BUILT-IN::TEXTURE}**>";  // 纹理文件的位置
+  enum Type { unknown=0x0, diffuse = 0x1, specular = 0x2, shadow = 0x10 };
+  GLuint id;                                               // 材质id
+  Type type;                                               // 材质类型
+  std::string path = "<**{YURZI::BUILT-IN::TEXTURE}**>+";  // 纹理文件的位置
+  Texture(Texture::Type type, GLuint id = GL_ZERO);
+  Texture(const std::string &path,
+          Texture::Type type,
+          bool need_vFlip = false,
+          GLenum wrapMode = GL_REPEAT,
+          GLenum magFilterMode = GL_LINEAR,
+          GLenum minFilterMode = GL_LINEAR_MIPMAP_LINEAR);
 };
 
 

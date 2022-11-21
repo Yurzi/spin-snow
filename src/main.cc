@@ -3,16 +3,13 @@
 // gldw
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 // cpp std lib
-#include <cmath>
 #include <iostream>
 #include <memory>
 #include <vector>
 // c std lib
-#include <stb_image.h>
-#include <stdint.h>
+#include <cstdint>
 // project header
 #include "camera.h"
 #include "light.h"
@@ -37,7 +34,7 @@ std::shared_ptr<Mesh> screen;
 std::shared_ptr<Mesh> grass;
 
 Light light;
-Texture skybox_tex;
+Texture skybox_tex(Texture::unknown);
 
 int32_t windowWidth = 1024;
 int32_t windowHeight = 720;
@@ -45,9 +42,9 @@ int32_t windowHeight = 720;
 std::shared_ptr<Camera> camera;
 std::shared_ptr<Camera> shadow_camera;
 
-int32_t shadowMapResolution = 4096;
+int32_t shadowMapResolution = 16384;
 GLuint shadowMapFBO;
-Texture shadowTexture;
+Texture shadowTexture(Texture::shadow);
 
 /* functions */
 // callback function for window size changed
@@ -102,14 +99,8 @@ void init() {
   screen->setup();
 
   // texture init
-  Texture texture;
-  texture.type = Texture::diffuse;
-  texture.path = "assets/wall.jpg";
-  texture.id = Texture2DFromFile(texture.path);
-  ground->add_texture(texture);
-  texture.type = Texture::specular;
-  texture.id = Texture2DFromUChar(nullptr);
-  ground->add_texture(texture);
+  ground->add_texture(Texture("assets/wall.jpg", Texture::diffuse));
+  ground->add_texture(Texture(Texture::specular,Texture2DFromUChar(nullptr)));
 
   std::vector<std::string> files = {
     "assets/skybox/right.jpg",
@@ -121,12 +112,7 @@ void init() {
   };
   skybox_tex.id = CubeMapFromFile(files);
 
-  texture.type = Texture::diffuse;
-  texture.path = "assets/nya.png";
-  stbi_set_flip_vertically_on_load(true);
-  texture.id = Texture2DFromFile(texture.path);
-  stbi_set_flip_vertically_on_load(false);
-  grass->add_texture(texture);
+  grass->add_texture(Texture("assets/nya.png", Texture::diffuse, true));
 
 
   // shadow
@@ -163,8 +149,6 @@ void init() {
   default_prog->use();
 
   glEnable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void display() {
@@ -184,7 +168,6 @@ void display() {
   /*-----draw objs-------*/
 
   // shadow draw
-  shadow_prog->use();
   glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
   glClear(GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, shadowMapResolution, shadowMapResolution);
@@ -196,6 +179,8 @@ void display() {
   // default draw
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, windowWidth, windowHeight);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   skybox_prog->use();
   glActiveTexture(GL_TEXTURE16);
@@ -207,7 +192,6 @@ void display() {
   skybox->draw(skybox_prog, camera);
   glDepthMask(GL_TRUE);
 
-  dot_light_prog->use();
   cube_light->translate = light.position;
   cube_light->draw(dot_light_prog, camera);
 
@@ -217,13 +201,12 @@ void display() {
   model->draw(default_prog, camera);
   ground->draw(default_prog, camera);
   grass->draw(default_prog, camera);
-  /*
-    debug->use();
-    glDisable(GL_DEPTH_TEST);
-    glViewport(0, 0, windowWidth / 3, windowHeight / 3);
-    screen->draw(debug);
-    glEnable(GL_DEPTH_TEST);
-      */
+  debug->use();
+//  glDisable(GL_DEPTH_TEST);
+//  glViewport(0, 0, windowWidth / 3, windowHeight / 3);
+//  screen->draw(debug);
+//  glEnable(GL_DEPTH_TEST);
+//  glDisable(GL_BLEND);
 }
 
 // main
@@ -235,8 +218,8 @@ int main(int argc, char *argv[]) {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   // create window
-  GLFWwindow *window = glfwCreateWindow(windowWidth, windowHeight, "Snow", NULL, NULL);
-  if (window == NULL) {
+  GLFWwindow *window = glfwCreateWindow(windowWidth, windowHeight, "Snow", nullptr, nullptr);
+  if (window == nullptr) {
     // check is success
     std::cout << "Failed to initialize GLFW Window" << std::endl;
     glfwTerminate();

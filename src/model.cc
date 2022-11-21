@@ -211,6 +211,7 @@ Texture::Type convert_from_aiTextureType(aiTextureType aitype) {
     custom_type = Texture::specular;
     break;
   default:
+    custom_type = Texture::unknown;
     break;
   }
   return custom_type;
@@ -229,7 +230,7 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
     // 检查是否已经加载
     if (texture_loaded.find(texture_path) == texture_loaded.end()) {
       // 未加载
-      Texture texture;
+      Texture texture(convert_from_aiTextureType(type));
       const aiTexture *aitexture = scene->GetEmbeddedTexture(texture_path.c_str());
       if (aitexture != nullptr) {
         texture.id = Texture2DFromAssimp(aitexture, GL_CLAMP_TO_EDGE);
@@ -247,12 +248,11 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
   }
   // 检查是否为不存在而退出
   if (i == 0) {
-    const std::string default_texture_path = "<**[YURZI::TEXTURE::DEFAULT]**>";
+    Texture texture(convert_from_aiTextureType(type));
+    const std::string default_texture_path = texture.path;
     // 添加默认材质 [hard code may be unsafe consider random string]
     if (texture_loaded.find(default_texture_path) == texture_loaded.end()) {
-      Texture texture;
       texture.id = Texture2DFromUChar(nullptr);
-      texture.type = convert_from_aiTextureType(type);
       texture.path = default_texture_path;
       textures_tmp.push_back(texture);
       texture_loaded.insert(std::pair<std::string, Texture>(texture.path, texture));

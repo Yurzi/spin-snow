@@ -1,7 +1,13 @@
 #include "mesh.h"
+
 #include <glm/gtc/matrix_transform.hpp>
+#include <stb_image.h>
+
 #include <iostream>
 #include <string>
+#include <ctime>
+
+#include "utils.h"
 
 
 struct VertexInner {
@@ -9,6 +15,25 @@ struct VertexInner {
   glm::vec3 Normal;        // 法线
   glm::vec2 TexCoords[0];  // 纹理坐标 assimp 允许一个顶点有多个纹理坐标
 };
+
+
+Texture::Texture(Texture::Type type, GLuint id) {
+  this->type = type;
+  this->id = id;
+  this->path += std::to_string(type);
+  if (type == Texture::unknown) {
+    this->path += ":";
+    this->path += std::to_string(clock());
+  }
+}
+Texture::Texture(
+  const std::string &path, Texture::Type type, bool need_vFlip, GLenum wrapMode, GLenum magFilterMode, GLenum minFilterMode) {
+  this->path = path;
+  this->type = type;
+  stbi_set_flip_vertically_on_load_thread(need_vFlip);
+  this->id = Texture2DFromFile(path, wrapMode, magFilterMode, minFilterMode);
+  stbi_set_flip_vertically_on_load_thread(false);
+}
 
 Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices, const std::vector<Texture> &textures) {
   // 赋值
@@ -232,6 +257,7 @@ void Mesh::prepare_draw(std::shared_ptr<ShaderProgram> shader) noexcept {
 }
 
 void Mesh::draw(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Camera> camera) noexcept {
+  shader->use();
   prepare_draw(shader);
   if (camera != nullptr) {
     // 传模型矩阵
