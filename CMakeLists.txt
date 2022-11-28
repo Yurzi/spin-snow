@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.23)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../vcpkg/scripts/buildsystems/vcpkg.cmake"
   CACHE STRING "Vcpkg toolchain file")  # you should change this path to your vcpkg
-set(VCPKG_TARGET_TRIPLET "x64-linux" CACHE STRING "" FORCE) # you should change this to your platform triplet. For windows e.g. x64-windows, for linux e.g. x64-linux. more detial see `vcpkg help triplet`
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+  set(VCPKG_TARGET_TRIPLET "x64-linux" CACHE STRING "" FORCE)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
+  set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "" FORCE)
+endif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/ports")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
