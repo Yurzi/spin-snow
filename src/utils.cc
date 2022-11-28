@@ -8,7 +8,7 @@
 #include <stb_image.h>
 
 GLuint Texture2DFromFile(const std::string &file_path, GLenum wrapMode, GLenum magFilterMode, GLenum minFilterMode) noexcept {
-  GLuint texture_id;
+  GLuint texture_id = GL_ZERO;
 
   int32_t width, height, nrChannels;
   //  stbi_set_flip_vertically_on_load(true);
@@ -148,7 +148,7 @@ GLuint Texture2DFromUChar(const unsigned char data[],
 #endif
   }
 
-  GLuint texture_id;
+  GLuint texture_id = GL_ZERO;
   glGenTextures(1, &texture_id);
   glBindTexture(GL_TEXTURE_2D, texture_id);
 
@@ -170,7 +170,7 @@ GLuint Texture2DFromUChar(const unsigned char data[],
 
 GLuint Texture2DForShadowMap(
   GLuint width, GLuint height, GLenum wrapMode, GLenum magFilterMode, GLenum minFilterMode, GLfloat *borderColor) noexcept {
-  GLuint texture_id;
+  GLuint texture_id = GL_ZERO;
   glGenTextures(1, &texture_id);
   glBindTexture(GL_TEXTURE_2D, texture_id);
 
