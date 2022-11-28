@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.23)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../vcpkg/scripts/buildsystems/vcpkg.cmake"
   CACHE STRING "Vcpkg toolchain file")
-set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "" FORCE)
+set(VCPKG_TARGET_TRIPLET "x64-linux" CACHE STRING "" FORCE)
 set(VCPKG_OVERLAY_PORTS "${CMAKE_CURRENT_SOURCE_DIR}/ports")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

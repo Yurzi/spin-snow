@@ -7,7 +7,9 @@
 // cpp std lib
 #include <iostream>
 #include <memory>
+#include <random>
 #include <vector>
+
 // c std lib
 #include <cstdint>
 // project header
@@ -17,6 +19,7 @@
 #include "shader.h"
 #include "utils.h"
 
+
 /* global */
 bool keyboardState[1024];
 ShaderProgram::Ptr default_prog;
@@ -25,9 +28,14 @@ ShaderProgram::Ptr debug;
 ShaderProgram::Ptr dot_light_prog;
 ShaderProgram::Ptr skybox_prog;
 
+static const int64_t SNOWFLAKES_COUNT = 64;
+std::random_device rd;
+std::ranlux48 random_engine(rd());
+
 Model::Ptr model;
 Model::Ptr cube_light;
 Model::Ptr skybox;
+std::vector<Model::Ptr> snowflakes;
 
 Mesh::Ptr ground;
 Mesh::Ptr screen;
@@ -54,6 +62,44 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_t action, int32_t mods);
 // process user input
 void processInput(GLFWwindow *window);
+Model::Ptr genSnowflakes() {
+  // gen plain snowflakes
+  Model::Ptr snowflakes = std::make_shared<Model>("assets/snowflakes.obj");
+  // setting origin place
+  std::uniform_real_distribution<float> dist(-50, 50);
+  std::uniform_real_distribution<float> height(0, 16);
+
+  snowflakes->translate = glm::vec3(dist(random_engine), 50 + height(random_engine), dist(random_engine));
+  snowflakes->rotate = glm::vec3(dist(random_engine), dist(random_engine), dist(random_engine));
+  snowflakes->scale = glm::vec3(8, 8, 8);
+
+  return snowflakes;
+}
+
+void anmineSnowflakes() {
+  std::uniform_real_distribution<float> dist(0, 1.1);
+  std::uniform_real_distribution<float> height(0, 16);
+  for (auto item : snowflakes) {
+    // 进行下落
+    if (item->translate.y <= -10) {
+      item->translate.y = 50 + height(random_engine);
+    }
+    item->translate.y -= dist(random_engine);
+
+    item->rotate.z += 10 * dist(random_engine);
+    if (item->rotate.z >= 360) {
+      item->rotate.z -= 360;
+    }
+    item->rotate.y += 10 * dist(random_engine);
+    if (item->rotate.y >= 360) {
+      item->rotate.y -= 360;
+    }
+    item->rotate.x += 10 * dist(random_engine);
+    if (item->rotate.x >= 360) {
+      item->rotate.x -= 360;
+    }
+  }
+}
 // init function
 void init() {
   // init shader
@@ -75,7 +121,10 @@ void init() {
   light.diffuse = {(float)218 / 255, (float)218 / 255, (float)192 / 255};
 
   // init objects;
-  model = std::make_shared<Model>("assets/naheida/纳西妲.pmx");
+  model = std::make_shared<Model>("assets/snowflakes.obj");
+  for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
+    snowflakes.push_back(genSnowflakes());
+  }
   cube_light = std::make_shared<Model>("assets/cube.obj");
   skybox = std::make_shared<Model>("assets/cube.obj");
   ground = std::make_shared<Mesh>();
@@ -135,6 +184,8 @@ void init() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // properties setting
+  model->translate.y = 10;
+  model->scale = {8, 8, 8};
   ground->scale = glm::vec3(50, 50, 50);
   cube_light->scale = {0.2, 0.2, 0.2};
   cube_light->translate = light.position;
@@ -145,6 +196,9 @@ void init() {
   model->add_texture(shadowTexture);
   screen->add_texture(shadowTexture);
   grass->add_texture(shadowTexture);
+  for (auto item : snowflakes) {
+    item->add_texture(shadowTexture);
+  }
 
   default_prog->use();
 
@@ -171,6 +225,9 @@ void display() {
   glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
   glClear(GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, shadowMapResolution, shadowMapResolution);
+  for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
+    snowflakes[i]->draw(shadow_prog, shadow_camera);
+  }
   model->draw(shadow_prog, shadow_camera);
   ground->draw(shadow_prog, shadow_camera);
   grass->draw(shadow_prog, shadow_camera);
@@ -198,6 +255,9 @@ void display() {
   default_prog->use();
   default_prog->set_uniform("shadowVP", shadow_camera->getProjectionMatrix() * shadow_camera->getViewMatrix());
 
+  for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
+    snowflakes[i]->draw(default_prog, camera);
+  }
   model->draw(default_prog, camera);
   ground->draw(default_prog, camera);
   grass->draw(default_prog, camera);
@@ -207,6 +267,8 @@ void display() {
   //  screen->draw(debug);
   //  glEnable(GL_DEPTH_TEST);
   //  glDisable(GL_BLEND);
+
+  anmineSnowflakes();
 }
 
 // main

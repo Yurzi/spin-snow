@@ -3,9 +3,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <stb_image.h>
 
+#include <ctime>
 #include <iostream>
 #include <string>
-#include <ctime>
+
 
 #include "utils.h"
 
@@ -184,10 +185,14 @@ void Mesh::setup() noexcept {
     ptr->Position = this->vertices[i].Position;
     ptr->Normal = this->vertices[i].Normal;
     // memory copy [unsafe]
+#ifdef _WIN32_
     memcpy_s(ptr->TexCoords,
              sizeof(glm::vec2) * this->texcoords_layers,
              this->vertices[i].TexCoords.data(),
              sizeof(glm::vec2) * this->texcoords_layers);
+#else
+    memcpy(ptr->TexCoords, this->vertices[i].TexCoords.data(), sizeof(glm::vec2) * this->texcoords_layers);
+#endif
   }
 
   // 3.从内存空间将数据发送到GPU buffer

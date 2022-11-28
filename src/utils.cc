@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#include <cstring>
 #include <iostream>
 
 #include <stdint.h>
@@ -139,7 +140,12 @@ GLuint Texture2DFromUChar(const unsigned char data[],
     }
     length = width * height * unit_size;
     image = (unsigned char *)malloc(sizeof(unsigned char) * length);
+
+#ifdef _WIN32_
     memcpy_s(image, length, data, length);
+#else
+    memcpy(image, data, length);
+#endif
   }
 
   GLuint texture_id;
