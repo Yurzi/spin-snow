@@ -28,7 +28,7 @@ ShaderProgram::Ptr debug;
 ShaderProgram::Ptr dot_light_prog;
 ShaderProgram::Ptr skybox_prog;
 
-static const int64_t SNOWFLAKES_COUNT = 64;
+static const int64_t SNOWFLAKES_COUNT = 2;
 std::random_device rd;
 std::ranlux48 random_engine(rd());
 

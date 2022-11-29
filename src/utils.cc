@@ -199,7 +199,7 @@ GLuint CubeMapFromFile(const std::vector<std::string> &file_path,
                        GLenum wrapMode,
                        GLenum magFilterMode,
                        GLenum minFilterMode) noexcept {
-  GLuint texture_id;
+  GLuint texture_id = GL_ZERO;
 
   int32_t width, height, nrChannels;
   //  stbi_set_flip_vertically_on_load(true);
