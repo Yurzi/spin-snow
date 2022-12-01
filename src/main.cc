@@ -317,7 +317,7 @@ int main(int argc, char *argv[]) {
     // ------------------------------------
     processInput(window);
     // rotate cammer
-    // ------------------------------------    
+    // ------------------------------------
     rotate_cammer();
     // render
     // ------------------------------------
@@ -379,7 +379,6 @@ void processInput(GLFWwindow *window) {
     light.position.y += 0.05f;
   if (keyboardState[GLFW_KEY_H])
     light.position.y -= 0.05f;
-
 }
 
 void mouse_move_callback(GLFWwindow *window, double x, double y) {
@@ -406,16 +405,15 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {}
 void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
   keyboardState[key] = (action == GLFW_PRESS || action == GLFW_REPEAT) ? true : false;
 
-  if(key == GLFW_KEY_C && action == GLFW_PRESS){
+  if (key == GLFW_KEY_C && action == GLFW_PRESS) {
     rotate_cammer_state(true);
   }
-
 }
-void rotate_cammer(){
-  if(rotate_cammer_state(false)){
-    //std::cout<<"r";
+void rotate_cammer() {
+  if (rotate_cammer_state(false)) {
+    // std::cout<<"r";
 
-    float sen = 1;
+    float sen = 0.5;
     float pointx = 0.0, pointz = 0.0;
     glm::vec3 old_position = camera->position;
     float old_position_x = old_position.x;
@@ -423,21 +421,21 @@ void rotate_cammer(){
 
     float vecx = old_position_x - pointx;
     float vecz = old_position_z - pointz;
-    //float r = sqrt(pow(old_position_x, 2) + pow(old_position_z, 2));
+    // float r = sqrt(pow(old_position_x, 2) + pow(old_position_z, 2));
     float dir_x = 0;
     float dir_z = 0;
-    if(old_position_z == pointz){
+    if (old_position_z == pointz) {
       dir_x = 0;
-      if(old_position_x > pointx){
+      if (old_position_x > pointx) {
         dir_z = 1;
-      }else{
+      } else {
         dir_z = -1;
       }
-    }else{
-      dir_x = old_position_z > pointz ? -1 : 1 ;
-      dir_z =  -1 * dir_x * vecx / vecz;
-      //归一化
-      float sum = abs(dir_x) + abs(dir_z);
+    } else {
+      dir_x = old_position_z > pointz ? -1 : 1;
+      dir_z = -1 * dir_x * vecx / vecz;
+      // 归一化
+      float sum = std::abs(dir_x) + std::abs(dir_z);
       dir_x /= sum;
       dir_z /= sum;
     }
@@ -449,12 +447,11 @@ void rotate_cammer(){
 
     camera->position.x = new_position_x;
     camera->position.z = new_position_z;
-
   }
 }
-bool rotate_cammer_state(bool is_change){
+bool rotate_cammer_state(bool is_change) {
   static bool state = false;
-  if(is_change){
+  if (is_change) {
     state = !state;
   }
   return state;
