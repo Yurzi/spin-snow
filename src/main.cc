@@ -28,7 +28,7 @@ ShaderProgram::Ptr debug;
 ShaderProgram::Ptr dot_light_prog;
 ShaderProgram::Ptr skybox_prog;
 
-static const int64_t SNOWFLAKES_COUNT = 2;
+static const int64_t SNOWFLAKES_COUNT = 64;
 std::random_device rd;
 std::ranlux48 random_engine(rd());
 
@@ -52,7 +52,7 @@ Camera::Ptr shadow_camera;
 
 int32_t shadowMapResolution = 16384;
 GLuint shadowMapFBO;
-Texture shadowTexture(Texture::shadow);
+Texture::Ptr shadowTexture;
 
 /* functions */
 // callback function for window size changed
@@ -66,7 +66,9 @@ bool rotate_cammer_state(bool is_change);
 void processInput(GLFWwindow *window);
 Model::Ptr genSnowflakes() {
   // gen plain snowflakes
-  Model::Ptr snowflakes = std::make_shared<Model>("assets/snowflakes.obj");
+  static Model snowflakes_template("assets/snowflakes.obj");
+  Model::Ptr snowflakes = std::make_shared<Model>(snowflakes_template);
+
   // setting origin place
   std::uniform_real_distribution<float> dist(-50, 50);
   std::uniform_real_distribution<float> height(0, 16);
@@ -150,8 +152,8 @@ void init() {
   screen->setup();
 
   // texture init
-  ground->add_texture(Texture("assets/wall.jpg", Texture::diffuse));
-  ground->add_texture(Texture(Texture::specular, Texture2DFromUChar(nullptr)));
+  ground->add_texture(std::make_shared<Texture>("assets/wall.jpg", Texture::diffuse));
+  ground->add_texture(std::make_shared<Texture>(Texture::specular, Texture2DFromUChar(nullptr)));
 
   std::vector<std::string> files = {
     "assets/skybox/right.jpg",
@@ -163,7 +165,7 @@ void init() {
   };
   skybox_tex.id = CubeMapFromFile(files);
 
-  grass->add_texture(Texture("assets/nya.png", Texture::diffuse, true));
+  grass->add_texture(std::make_shared<Texture>("assets/nya.png", Texture::diffuse, true));
 
 
   // shadow
@@ -176,11 +178,12 @@ void init() {
   shadow_camera->position = light.position;
   shadow_camera->fovy = 120;
 
+  shadowTexture = std::make_shared<Texture>(Texture::shadow);
   glGenFramebuffers(1, &shadowMapFBO);
-  shadowTexture.type = Texture::shadow;
-  shadowTexture.id = Texture2DForShadowMap(shadowMapResolution, shadowMapResolution, GL_CLAMP_TO_BORDER);
+  shadowTexture->type = Texture::shadow;
+  shadowTexture->id = Texture2DForShadowMap(shadowMapResolution, shadowMapResolution, GL_CLAMP_TO_BORDER);
   glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture.id, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture->id, 0);
   glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);

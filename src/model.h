@@ -17,8 +17,8 @@
 class Model {
 public:
   typedef std::shared_ptr<Model> Ptr;
-  
-  Model(){};
+
+  Model() = default;
   Model(const std::string &file_path) { load(file_path); }
   Model(const Model &oth);
   Model(Model &&oth);
@@ -31,7 +31,7 @@ public:
   void draw(ShaderProgram::Ptr shader, Camera::Ptr camera) noexcept;
 
   void add_mesh(const Mesh &mesh) noexcept { meshs.push_back(mesh); }
-  void add_texture(Texture &texture, bool is_move = false) noexcept;
+  void add_texture(Texture::Ptr texture) noexcept;
 
 public:
   glm::vec3 translate = glm::vec3(0, 0, 0);
@@ -40,11 +40,11 @@ public:
 
 private:
   Mesh processMesh(const aiMesh *mesh, const aiScene *scene) noexcept;
-  std::vector<Texture> loadMaterialTextures(const aiScene *scene, const aiMaterial *material, const aiTextureType type);
+  std::vector<Texture::Ptr> loadMaterialTextures(const aiScene *scene, const aiMaterial *material, const aiTextureType type);
 
 private:
   std::vector<Mesh> meshs;
-  std::unordered_map<std::string, Texture> texture_loaded;
+  std::unordered_map<std::string, Texture::Ptr> texture_loaded;
   bool has_loaded = false;
 
 private:

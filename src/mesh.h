@@ -43,7 +43,7 @@ struct Vertex {
  */
 struct Texture {
   typedef std::shared_ptr<Texture> Ptr;
-  enum Type { unknown=0x0, diffuse = 0x1, specular = 0x2, shadow = 0x10 };
+  enum Type { unknown = 0x0, diffuse = 0x1, specular = 0x2, shadow = 0x10 };
   GLuint id;                                               // 材质id
   Type type;                                               // 材质类型
   std::string path = "<**{YURZI::BUILT-IN::TEXTURE}**>+";  // 纹理文件的位置
@@ -54,15 +54,39 @@ struct Texture {
           GLenum wrapMode = GL_REPEAT,
           GLenum magFilterMode = GL_LINEAR,
           GLenum minFilterMode = GL_LINEAR_MIPMAP_LINEAR);
+  ~Texture() {
+    GLuint *p = &(this->id);
+    glDeleteTextures(1, p);
+  }
 };
 
+struct VBO {
+  typedef std::shared_ptr<VBO> Ptr;
+  GLuint id = GL_ZERO;
+  VBO() { glGenBuffers(1, &id); }
+  ~VBO() {
+    if (id != GL_ZERO)
+      glDeleteBuffers(1, &id);
+  }
+};
+
+struct EBO {
+  typedef std::shared_ptr<EBO> Ptr;
+  GLuint id = GL_ZERO;
+  EBO() { glGenBuffers(1, &id); }
+
+  ~EBO() {
+    if (id != GL_ZERO)
+      glDeleteBuffers(1, &id);
+  }
+};
 
 class Mesh {
 public:
   typedef std::shared_ptr<Mesh> Ptr;
   // 方法
   Mesh(){};
-  Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices, const std::vector<Texture> &textures);
+  Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices, const std::vector<Texture::Ptr> &textures);
   Mesh(const Mesh &oth);
   Mesh(Mesh &&oth);
   Mesh &operator=(const Mesh &oth) noexcept;
@@ -72,13 +96,13 @@ public:
   void setup() noexcept;
   void draw(ShaderProgram::Ptr shader, Camera::Ptr camera = nullptr) noexcept;
 
-  void add_texture(const Texture &texture) noexcept;
+  void add_texture(Texture::Ptr texture) noexcept;
 
 public:
   // 基础数据
-  std::vector<Vertex> vertices;   // 顶点
-  std::vector<GLuint> indices;    // 索引
-  std::vector<Texture> textures;  // 材质
+  std::vector<Vertex> vertices;        // 顶点
+  std::vector<GLuint> indices;         // 索引
+  std::vector<Texture::Ptr> textures;  // 材质
 public:
   glm::vec3 translate = glm::vec3(0, 0, 0);
   glm::vec3 rotate = glm::vec3(0, 0, 0);  // 角度制
@@ -97,8 +121,8 @@ private:
 
 private:
   // 渲染数据
-  GLuint VAO = GL_ZERO;  // 现在使用的VAO
-  GLuint VBO = GL_ZERO;
-  GLuint EBO = GL_ZERO;
+  GLuint vao = GL_ZERO;  // 现在使用的VAO
+  VBO::Ptr vbo = nullptr;
+  EBO::Ptr ebo = nullptr;
 };
 #endif  // !__MESH_H__

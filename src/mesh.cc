@@ -36,7 +36,7 @@ Texture::Texture(
   stbi_set_flip_vertically_on_load_thread(false);
 }
 
-Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices, const std::vector<Texture> &textures) {
+Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<GLuint> &indices, const std::vector<Texture::Ptr> &textures) {
   // 赋值
   this->vertices = vertices;
   this->indices = indices;
@@ -57,7 +57,10 @@ Mesh::Mesh(const Mesh &oth) {
   this->scale = oth.scale;
 
   this->texcoords_layers = oth.texcoords_layers;
-  this->has_setup = false;
+  this->has_setup = oth.has_setup;
+  this->vao = oth.vao;
+  this->vbo = oth.vbo;
+  this->ebo = oth.ebo;
 
   setup();
 }
@@ -76,16 +79,16 @@ Mesh::Mesh(Mesh &&oth) {
   this->current_shader = oth.current_shader;
   oth.current_shader = 0;
 
-  this->has_setup = true;
+  this->has_setup = oth.has_setup;
   this->shader_vao_map = std::move(oth.shader_vao_map);
   oth.shader_vao_map.clear();
 
-  this->VAO = oth.VAO;
-  oth.VAO = GL_ZERO;
-  this->VBO = oth.VBO;
-  oth.VBO = GL_ZERO;
-  this->EBO = oth.EBO;
-  oth.EBO = GL_ZERO;
+  this->vao = oth.vao;
+  oth.vao = GL_ZERO;
+  this->vbo = oth.vbo;
+  oth.vbo.reset();
+  this->ebo = oth.ebo;
+  oth.ebo.reset();
 
   setup();
 }
@@ -100,7 +103,10 @@ Mesh &Mesh::operator=(const Mesh &oth) noexcept {
   this->scale = oth.scale;
 
   this->texcoords_layers = oth.texcoords_layers;
-  this->has_setup = false;
+  this->has_setup = oth.has_setup;
+  this->vao = oth.vao;
+  this->vbo = oth.vbo;
+  this->ebo = oth.ebo;
 
   setup();
   return (*this);
@@ -119,28 +125,22 @@ Mesh &Mesh::operator=(Mesh &&oth) noexcept {
   this->current_shader = oth.current_shader;
   oth.current_shader = 0;
 
-  this->has_setup = true;
+  this->has_setup = oth.has_setup;
   this->shader_vao_map = std::move(oth.shader_vao_map);
   oth.shader_vao_map.clear();
 
-  this->VAO = oth.VAO;
-  oth.VAO = GL_ZERO;
-  this->VBO = oth.VBO;
-  oth.VBO = GL_ZERO;
-  this->EBO = oth.EBO;
-  oth.EBO = GL_ZERO;
+  this->vao = oth.vao;
+  oth.vao = GL_ZERO;
+  this->vbo = oth.vbo;
+  oth.vbo.reset();
+  this->ebo = oth.ebo;
+  oth.ebo.reset();
 
   setup();
   return (*this);
 }
 Mesh::~Mesh() {
   // 释放缓冲对象
-  if (VBO != GL_ZERO) {
-    glDeleteBuffers(1, &VBO);
-  }
-  if (EBO != GL_ZERO) {
-    glDeleteBuffers(1, &EBO);
-  }
   std::vector<GLuint> VAOs;
   for (const auto &i : shader_vao_map) {
     VAOs.push_back(i.second);
@@ -166,14 +166,15 @@ void Mesh::setup() noexcept {
 
   // 对于VBO指针的解析需要着色器对象，需要在draw call时进行
   // 同时要进行记忆, 所以将其和VAO的绑定将移动至draw call前进行
-  glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
+  this->vbo = std::make_shared<VBO>();
+  this->ebo = std::make_shared<EBO>();
+
   /*--------------------EBO----------------------------*/
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo->id);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
 
   /*--------------------VBO----------------------------*/
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, vbo->id);
   // 申请缓冲空间
   GLuint perVertexSize = sizeof(VertexInner) + sizeof(glm::vec2) * this->texcoords_layers;
   // 将位置信息加入到缓冲中
@@ -214,18 +215,18 @@ void Mesh::prepare_draw(ShaderProgram::Ptr shader) noexcept {
   this->current_shader = shader->get_id();
   // 查找是否已经生成VAO
   if (shader_vao_map.find(current_shader) != shader_vao_map.end()) {
-    this->VAO = shader_vao_map.find(current_shader)->second;
+    this->vao = shader_vao_map.find(current_shader)->second;
     return;
   }
 
   // 如果未找到对应的VAO，则需要生成
-  glGenVertexArrays(1, &(this->VAO));
-  shader_vao_map.insert({current_shader, this->VAO});
+  glGenVertexArrays(1, &(this->vao));
+  shader_vao_map.insert({current_shader, this->vao});
   // 进行VBO 和 EBO的绑定
-  glBindVertexArray(this->VAO);
+  glBindVertexArray(this->vao);
 
   /*-----VBO-------*/
-  glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, this->vbo->id);
   // 绑定指针
   GLint location = -1;
   GLuint perVertexSize = sizeof(VertexInner) + sizeof(glm::vec2) * this->texcoords_layers;
@@ -254,7 +255,7 @@ void Mesh::prepare_draw(ShaderProgram::Ptr shader) noexcept {
   }
 
   /*-----EBO-------*/
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->ebo->id);
 
   glBindVertexArray(GL_ZERO);
   glBindBuffer(GL_ARRAY_BUFFER, GL_ZERO);
@@ -297,26 +298,26 @@ void Mesh::draw(ShaderProgram::Ptr shader, Camera::Ptr camera) noexcept {
     std::string number;
     std::string name;
 
-    if (textures[i].type == Texture::diffuse) {
+    if (textures[i]->type == Texture::diffuse) {
       name = "diffuse";
       number = std::to_string(diffuseNr++);
-    } else if (textures[i].type == Texture::specular) {
+    } else if (textures[i]->type == Texture::specular) {
       name = "specular";
       number = std::to_string(specularNr++);
-    } else if (textures[i].type == Texture::shadow) {
+    } else if (textures[i]->type == Texture::shadow) {
       name = "shadow";
       number = std::to_string(shadowNr++);
     }
-    glBindTexture(GL_TEXTURE_2D, textures[i].id);
+    glBindTexture(GL_TEXTURE_2D, textures[i]->id);
     shader->set_uniform(prefix + name + number, i);
   }
   glActiveTexture(GL_TEXTURE0);
 
   // 绘制mesh
-  glBindVertexArray(VAO);
+  glBindVertexArray(vao);
   glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
   glBindVertexArray(GL_ZERO);
   glBindTexture(GL_TEXTURE_2D, GL_ZERO);
 }
 
-void Mesh::add_texture(const Texture &texture) noexcept { textures.push_back(texture); }
+void Mesh::add_texture(Texture::Ptr texture) noexcept { textures.push_back(texture); }

@@ -25,7 +25,10 @@ Model::Model(const Model &oth) {
   this->aiProcessFlags = oth.aiProcessFlags;
   this->root_dir = oth.root_dir;
 
-  this->has_loaded = false;
+  this->meshs = oth.meshs;
+  this->texture_loaded = oth.texture_loaded;
+
+  this->has_loaded = oth.has_loaded;
 
   load(this->model_path, this->aiProcessFlags);
 }
@@ -43,7 +46,7 @@ Model::Model(Model &&oth) {
   this->texture_loaded = std::move(oth.texture_loaded);
   oth.texture_loaded.clear();
 
-  this->has_loaded = true;
+  this->has_loaded = oth.has_loaded;
 
   load(this->model_path, this->aiProcessFlags);
 }
@@ -56,7 +59,10 @@ Model &Model::operator=(const Model &oth) noexcept {
   this->aiProcessFlags = oth.aiProcessFlags;
   this->root_dir = oth.root_dir;
 
-  this->has_loaded = false;
+  this->meshs = oth.meshs;
+  this->texture_loaded = oth.texture_loaded;
+
+  this->has_loaded = oth.has_loaded;
 
   load(this->model_path, this->aiProcessFlags);
   return (*this);
@@ -75,20 +81,13 @@ Model &Model::operator=(Model &&oth) noexcept {
   this->texture_loaded = std::move(oth.texture_loaded);
   oth.texture_loaded.clear();
 
-  this->has_loaded = true;
+  this->has_loaded = oth.has_loaded;
 
   load(this->model_path, this->aiProcessFlags);
   return (*this);
 }
 
-Model::~Model() {
-  std::vector<GLuint> textures_to_del;
-  for (auto &i : texture_loaded) {
-    textures_to_del.push_back(i.second.id);
-  }
-
-  glDeleteTextures(textures_to_del.size(), textures_to_del.data());
-}
+Model::~Model() {}
 
 void Model::load(const std::string &file_path, bool flipUV, bool genNormal) noexcept {
   if (has_loaded) {
@@ -129,7 +128,7 @@ void Model::load(const std::string &file_path, uint32_t aiProcessFlags) {
 Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {
   std::vector<Vertex> vertices;
   std::vector<GLuint> indices;
-  std::vector<Texture> textures;
+  std::vector<Texture::Ptr> textures;
 
   // 处理顶点
   for (uint32_t i = 0; i < mesh->mNumVertices; ++i) {
@@ -164,10 +163,10 @@ Mesh Model::processMesh(const aiMesh *mesh, const aiScene *scene) noexcept {
   // 处理材质
   if (mesh->mMaterialIndex >= 0) {
     aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-    std::vector<Texture> diffuseMaps = loadMaterialTextures(scene, material, aiTextureType_DIFFUSE);
+    std::vector<Texture::Ptr> diffuseMaps = loadMaterialTextures(scene, material, aiTextureType_DIFFUSE);
     textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
-    std::vector<Texture> specularMaps = loadMaterialTextures(scene, material, aiTextureType_SPECULAR);
+    std::vector<Texture::Ptr> specularMaps = loadMaterialTextures(scene, material, aiTextureType_SPECULAR);
     textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
   }
   return std::move(Mesh(vertices, indices, textures));
@@ -217,8 +216,9 @@ Texture::Type convert_from_aiTextureType(aiTextureType aitype) {
   return custom_type;
 }
 
-std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiMaterial *material, const aiTextureType type) {
-  std::vector<Texture> textures_tmp;
+std::vector<Texture::Ptr>
+Model::loadMaterialTextures(const aiScene *scene, const aiMaterial *material, const aiTextureType type) {
+  std::vector<Texture::Ptr> textures_tmp;
   uint32_t i = 0;
   for (i = 0; i < material->GetTextureCount(type); ++i) {
     aiString str;
@@ -230,32 +230,32 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
     // 检查是否已经加载
     if (texture_loaded.find(texture_path) == texture_loaded.end()) {
       // 未加载
-      Texture texture(convert_from_aiTextureType(type));
+      Texture::Ptr texture = std::make_shared<Texture>(convert_from_aiTextureType(type));
       const aiTexture *aitexture = scene->GetEmbeddedTexture(texture_path.c_str());
       if (aitexture != nullptr) {
-        texture.id = Texture2DFromAssimp(aitexture, GL_CLAMP_TO_EDGE);
+        texture->id = Texture2DFromAssimp(aitexture, GL_CLAMP_TO_EDGE);
       } else {
-        texture.id = Texture2DFromFile(texture_path, GL_CLAMP_TO_EDGE);
+        texture->id = Texture2DFromFile(texture_path, GL_CLAMP_TO_EDGE);
       }
 
-      texture.type = convert_from_aiTextureType(type);
-      texture.path = texture_path;
+      texture->type = convert_from_aiTextureType(type);
+      texture->path = texture_path;
       textures_tmp.push_back(texture);
-      texture_loaded.insert(std::pair<std::string, Texture>(texture.path, texture));
+      texture_loaded.insert(std::pair<std::string, Texture::Ptr>(texture->path, texture));
     } else {
       textures_tmp.push_back(texture_loaded.find(texture_path)->second);
     }
   }
   // 检查是否为不存在而退出
   if (i == 0) {
-    Texture texture(convert_from_aiTextureType(type));
-    const std::string default_texture_path = texture.path;
+    Texture::Ptr texture = std::make_shared<Texture>(convert_from_aiTextureType(type));
+    const std::string default_texture_path = texture->path;
     // 添加默认材质 [hard code may be unsafe consider random string]
     if (texture_loaded.find(default_texture_path) == texture_loaded.end()) {
-      texture.id = Texture2DFromUChar(nullptr);
-      texture.path = default_texture_path;
+      texture->id = Texture2DFromUChar(nullptr);
+      texture->path = default_texture_path;
       textures_tmp.push_back(texture);
-      texture_loaded.insert(std::pair<std::string, Texture>(texture.path, texture));
+      texture_loaded.insert(std::pair<std::string, Texture::Ptr>(texture->path, texture));
     } else {
       textures_tmp.push_back(texture_loaded.find(default_texture_path)->second);
     }
@@ -263,15 +263,8 @@ std::vector<Texture> Model::loadMaterialTextures(const aiScene *scene, const aiM
   return textures_tmp;
 }
 
-void Model::add_texture(Texture &texture, bool is_move) noexcept {
+void Model::add_texture(Texture::Ptr texture) noexcept {
   for (auto &i : meshs) {
     i.add_texture(texture);
-  }
-
-  if (is_move) {
-    // move the control of texture to this model
-    texture_loaded.insert(std::pair<std::string, Texture>(texture.path, texture));
-    texture.id = GL_ZERO;
-    texture.path = "";
   }
 }
