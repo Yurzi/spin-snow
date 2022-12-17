@@ -410,10 +410,17 @@ void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_
   }
 }
 void rotate_cammer() {
+  static float last_frame = glfwGetTime();
   if (rotate_cammer_state(false)) {
     // std::cout<<"r";
 
-    float sen = 0.5;
+    //计算时间差
+    float current_frame = glfwGetTime();
+    float deltaTime = current_frame - last_frame;
+    last_frame = current_frame;
+
+    float sen = 1;
+    float speed = sen * deltaTime * 10;
     float pointx = 0.0, pointz = 0.0;
     glm::vec3 old_position = camera->position;
     float old_position_x = old_position.x;
@@ -440,8 +447,8 @@ void rotate_cammer() {
       dir_z /= sum;
     }
 
-    float delx = dir_x * sen;
-    float delz = dir_z * sen;
+    float delx = dir_x * speed;
+    float delz = dir_z * speed;
     float new_position_x = old_position_x + delx;
     float new_position_z = old_position_z + delz;
 
