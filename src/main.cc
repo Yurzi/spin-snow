@@ -70,6 +70,7 @@ void frambuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height)
 void mouse_move_callback(GLFWwindow *window, double x, double y);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_t action, int32_t mods);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void rotate_cammer();
 bool rotate_cammer_state(bool is_change);
 float get_time_delta();
@@ -319,6 +320,7 @@ int main(int argc, char *argv[]) {
   glfwSetCursorPosCallback(window, mouse_move_callback);
   glfwSetScrollCallback(window, scroll_callback);
   glfwSetKeyCallback(window, keyboard_callback);
+  glfwSetMouseButtonCallback(window, mouse_button_callback);
 
   init();
 
@@ -410,11 +412,16 @@ void mouse_move_callback(GLFWwindow *window, double x, double y) {
   xoffset *= sensitivity;
   yoffset *= sensitivity;
 
-  //camera->yaw += xoffset;
-  model->rotate -= glm::vec3(0, xoffset, 0);
-  camera->pitch += yoffset;
+  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) 
+  {
+    camera->yaw += xoffset;
+    camera->pitch += yoffset;
+    camera->pitch = glm::clamp(camera->pitch, -89.0f, 89.0f);
+  }else{
+    model->rotate -= glm::vec3(0, xoffset, 0);
+  }
+  
 
-  camera->pitch = glm::clamp(camera->pitch, -89.0f, 89.0f);
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {}
@@ -425,7 +432,14 @@ void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_
   if (key == GLFW_KEY_C && action == GLFW_PRESS) {
     rotate_cammer_state(true);
   }
+  if (key == GLFW_KEY_V && action == GLFW_PRESS) {
+    moveControler = &cammerMoveControler;
+  }
+  if (key == GLFW_KEY_B && action == GLFW_PRESS) {
+    moveControler = &snowmanMoveControler;
+  }
 }
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){}
 void rotate_cammer() {
 
   if (rotate_cammer_state(false)) {
