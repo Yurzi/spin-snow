@@ -13,9 +13,12 @@ struct Texture {
 uniform Texture textures;
 
 void main() {
+  
   if (texture(textures.diffuse0, f_texcoord0).a == 0) {
     discard;
   }else {
     f_depth = gl_FragCoord;
   }
+  
+
 }

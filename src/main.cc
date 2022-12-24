@@ -54,6 +54,8 @@ int32_t shadowMapResolution = 16384;
 GLuint shadowMapFBO;
 Texture::Ptr shadowTexture;
 
+float deltaTime = 0;
+
 /* functions */
 // callback function for window size changed
 void frambuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height);
@@ -62,6 +64,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_t action, int32_t mods);
 void rotate_cammer();
 bool rotate_cammer_state(bool is_change);
+float get_time_delta();
 // process user input
 void processInput(GLFWwindow *window);
 Model::Ptr genSnowflakes() {
@@ -125,7 +128,7 @@ void init() {
   light.diffuse = {(float)218 / 255, (float)218 / 255, (float)192 / 255};
 
   // init objects;
-  model = std::make_shared<Model>("assets/snowflakes.obj");
+  model = std::make_shared<Model>("assets/11581_Snowman_V2_l3.obj");
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes.push_back(genSnowflakes());
   }
@@ -189,8 +192,9 @@ void init() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // properties setting
+  model->rotate = glm::vec3(-90, 0, 0);
   model->translate.y = 10;
-  model->scale = {8, 8, 8};
+  //model->scale = {8, 8, 8};
   ground->scale = glm::vec3(50, 50, 50);
   cube_light->scale = {0.2, 0.2, 0.2};
   cube_light->translate = light.position;
@@ -313,6 +317,9 @@ int main(int argc, char *argv[]) {
 
   // loop for continuios render and event loop for window
   while (!glfwWindowShouldClose(window)) {
+    //delta time
+    //-------------------------------------
+    deltaTime = get_time_delta();
     // user input
     // ------------------------------------
     processInput(window);
@@ -342,20 +349,22 @@ void frambuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height)
 }
 // process user input
 void processInput(GLFWwindow *window) {
+  float myDeltaTime = deltaTime;
+  float sen = 1.0f;
   if (keyboardState[GLFW_KEY_ESCAPE]) {
     glfwSetWindowShouldClose(window, true);
   }
   if (keyboardState[GLFW_KEY_W]) {
-    camera->position += 0.05f * camera->direction;
+    camera->position += sen * myDeltaTime * camera->direction;
   }
   if (keyboardState[GLFW_KEY_S]) {
-    camera->position -= 0.05f * camera->direction;
+    camera->position -= sen * myDeltaTime * camera->direction;
   }
   if (keyboardState[GLFW_KEY_A]) {
-    camera->position -= 0.05f * glm::normalize(glm::cross(camera->direction, camera->up));
+    camera->position -= sen * myDeltaTime * glm::normalize(glm::cross(camera->direction, camera->up));
   }
   if (keyboardState[GLFW_KEY_D]) {
-    camera->position += 0.05f * glm::normalize(glm::cross(camera->direction, camera->up));
+    camera->position += sen * myDeltaTime * glm::normalize(glm::cross(camera->direction, camera->up));
   }
 
   if (keyboardState[GLFW_KEY_R])
@@ -410,17 +419,11 @@ void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_
   }
 }
 void rotate_cammer() {
-  static float last_frame = glfwGetTime();
+
   if (rotate_cammer_state(false)) {
-    // std::cout<<"r";
-
-    //计算时间差
-    float current_frame = glfwGetTime();
-    float deltaTime = current_frame - last_frame;
-    last_frame = current_frame;
-
+    float myDeltaTime = deltaTime;
     float sen = 1;
-    float speed = sen * deltaTime * 10;
+    float speed = sen * myDeltaTime * 10;
     float pointx = 0.0, pointz = 0.0;
     glm::vec3 old_position = camera->position;
     float old_position_x = old_position.x;
@@ -462,4 +465,12 @@ bool rotate_cammer_state(bool is_change) {
     state = !state;
   }
   return state;
+}
+
+float get_time_delta(){
+  static float last_frame = glfwGetTime();
+  float current_frame = glfwGetTime();
+  float deltaTime = current_frame - last_frame;
+  last_frame = current_frame;
+  return deltaTime;
 }
