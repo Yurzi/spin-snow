@@ -18,6 +18,9 @@
 #include "model.h"
 #include "shader.h"
 #include "utils.h"
+#include "MoveControler.h"
+#include "CammerMoveControler.h"
+#include "SnowmanMoveControler.h"
 
 
 /* global */
@@ -53,6 +56,11 @@ Camera::Ptr shadow_camera;
 int32_t shadowMapResolution = 16384;
 GLuint shadowMapFBO;
 Texture::Ptr shadowTexture;
+
+CammerMoveControler cammerMoveControler;
+SnowmanMoveControler snowmanMoveControler;
+MoveControler*moveControler = &snowmanMoveControler;
+
 
 float deltaTime = 0;
 
@@ -119,7 +127,7 @@ void init() {
   // init camera
   camera = std::make_shared<Camera>();
   camera->aspect = (float)windowWidth / windowHeight;
-  camera->position = {0, 3, 5};
+  camera->position = {0, 30, 50};
 
   // init light
   light.position = glm::vec3(3.0f, 20.0f, 10.0f);
@@ -128,7 +136,7 @@ void init() {
   light.diffuse = {(float)218 / 255, (float)218 / 255, (float)192 / 255};
 
   // init objects;
-  model = std::make_shared<Model>("assets/11581_Snowman_V2_l3.obj");
+  model = std::make_shared<Model>("assets/snowman.obj");
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes.push_back(genSnowflakes());
   }
@@ -192,8 +200,7 @@ void init() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // properties setting
-  model->rotate = glm::vec3(-90, 0, 0);
-  model->translate.y = 10;
+  model->translate.y = 1;
   //model->scale = {8, 8, 8};
   ground->scale = glm::vec3(50, 50, 50);
   cube_light->scale = {0.2, 0.2, 0.2};
@@ -350,27 +357,27 @@ void frambuffer_size_callback(GLFWwindow *window, int32_t width, int32_t height)
 // process user input
 void processInput(GLFWwindow *window) {
   float myDeltaTime = deltaTime;
-  float sen = 1.0f;
+  float sen = 10.0f;
   if (keyboardState[GLFW_KEY_ESCAPE]) {
     glfwSetWindowShouldClose(window, true);
   }
   if (keyboardState[GLFW_KEY_W]) {
-    camera->position += sen * myDeltaTime * camera->direction;
+    moveControler->move_ahead(sen, myDeltaTime, camera, model);
   }
   if (keyboardState[GLFW_KEY_S]) {
-    camera->position -= sen * myDeltaTime * camera->direction;
+    moveControler->move_back(sen, myDeltaTime, camera, model);
   }
   if (keyboardState[GLFW_KEY_A]) {
-    camera->position -= sen * myDeltaTime * glm::normalize(glm::cross(camera->direction, camera->up));
+    moveControler->move_left(sen, myDeltaTime, camera, model);
   }
   if (keyboardState[GLFW_KEY_D]) {
-    camera->position += sen * myDeltaTime * glm::normalize(glm::cross(camera->direction, camera->up));
+    moveControler->move_right(sen, myDeltaTime, camera, model);
   }
 
   if (keyboardState[GLFW_KEY_R])
-    camera->position.y += 0.05f;
+    camera->position.y += sen * myDeltaTime;
   if (keyboardState[GLFW_KEY_F])
-    camera->position.y -= 0.05f;
+    camera->position.y -= sen * myDeltaTime;
 
   if (keyboardState[GLFW_KEY_I]) {
     light.position.z -= 0.05f;
@@ -403,7 +410,8 @@ void mouse_move_callback(GLFWwindow *window, double x, double y) {
   xoffset *= sensitivity;
   yoffset *= sensitivity;
 
-  camera->yaw += xoffset;
+  //camera->yaw += xoffset;
+  model->rotate -= glm::vec3(0, xoffset, 0);
   camera->pitch += yoffset;
 
   camera->pitch = glm::clamp(camera->pitch, -89.0f, 89.0f);
