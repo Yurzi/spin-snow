@@ -398,9 +398,9 @@ void processInput(GLFWwindow *window) {
     moveControler->move_right(sen, myDeltaTime, camera, model, snowman_firstpersonal);
   }
 
-  if (keyboardState[GLFW_KEY_R])
+  if (keyboardState[GLFW_KEY_R] && !first_personal)
     camera->position.y += sen * myDeltaTime;
-  if (keyboardState[GLFW_KEY_F])
+  if (keyboardState[GLFW_KEY_F] && !first_personal)
     camera->position.y -= sen * myDeltaTime;
 
   if (keyboardState[GLFW_KEY_I]) {
@@ -458,13 +458,13 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {}
 void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
   keyboardState[key] = (action == GLFW_PRESS || action == GLFW_REPEAT) ? true : false;
 
-  if (key == GLFW_KEY_C && action == GLFW_PRESS) {
+  if (key == GLFW_KEY_C && action == GLFW_PRESS && !first_personal) {
     rotate_cammer_state(true);
   }
-  if (key == GLFW_KEY_V && action == GLFW_PRESS) {
+  if (key == GLFW_KEY_V && action == GLFW_PRESS && !first_personal) {
     moveControler = &cammerMoveControler;
   }
-  if (key == GLFW_KEY_B && action == GLFW_PRESS) {
+  if (key == GLFW_KEY_B && action == GLFW_PRESS && !first_personal) {
     moveControler = &snowmanMoveControler;
   }
 }
