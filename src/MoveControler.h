@@ -18,8 +18,8 @@
 
 class MoveControler{
 public:
-    void virtual move_right(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model)=0;
-    void virtual move_left(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model)=0;
-    void virtual move_ahead(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model)=0;
-    void virtual move_back(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model)=0;
+    void virtual move_right(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal)=0;
+    void virtual move_left(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal)=0;
+    void virtual move_ahead(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal)=0;
+    void virtual move_back(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal)=0;
 };

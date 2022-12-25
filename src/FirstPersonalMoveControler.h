@@ -1,7 +1,7 @@
 #pragma once
 #include"MoveControler.h"
 
-class SnowmanMoveControler : public MoveControler{
+class FirstPersonalMoveControler : public MoveControler{
 public:
     void virtual move_right(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal);
     void virtual move_left(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal);

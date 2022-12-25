@@ -38,6 +38,7 @@ set(SRC_LIST
   src/stb_image.cc
   src/CammerMoveControler.cc
   src/SnowmanMoveControler.cc
+  src/FirstPersonalMoveControler.cc
   )
 
 # [dependencies]

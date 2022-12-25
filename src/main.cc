@@ -21,6 +21,7 @@
 #include "MoveControler.h"
 #include "CammerMoveControler.h"
 #include "SnowmanMoveControler.h"
+#include "FirstPersonalMoveControler.h"
 
 
 /* global */
@@ -39,6 +40,8 @@ Model::Ptr model;
 Model::Ptr cube_light;
 Model::Ptr skybox;
 std::vector<Model::Ptr> snowflakes;
+Model::Ptr snowman_firstpersonal;
+Model::Ptr person;
 
 Mesh::Ptr ground;
 Mesh::Ptr screen;
@@ -59,10 +62,15 @@ Texture::Ptr shadowTexture;
 
 CammerMoveControler cammerMoveControler;
 SnowmanMoveControler snowmanMoveControler;
+FirstPersonalMoveControler firstPersonalMoveControler;
 MoveControler*moveControler = &snowmanMoveControler;
 
 
 float deltaTime = 0;
+bool first_personal = false;
+glm::vec3 history_location(0, 0, 0);
+extern glm::vec3 first_personal_camera_y;
+
 
 /* functions */
 // callback function for window size changed
@@ -138,6 +146,8 @@ void init() {
 
   // init objects;
   model = std::make_shared<Model>("assets/snowman.obj");
+  snowman_firstpersonal = std::make_shared<Model>("assets/snowmanfirstperson.obj");
+  person = std::make_shared<Model>("assets/gy/甘雨.pmx");
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes.push_back(genSnowflakes());
   }
@@ -201,7 +211,7 @@ void init() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // properties setting
-  model->translate.y = 1;
+  person->translate = glm::vec3(-40, 0, -40);
   //model->scale = {8, 8, 8};
   ground->scale = glm::vec3(50, 50, 50);
   cube_light->scale = {0.2, 0.2, 0.2};
@@ -213,6 +223,8 @@ void init() {
   model->add_texture(shadowTexture);
   screen->add_texture(shadowTexture);
   grass->add_texture(shadowTexture);
+  snowman_firstpersonal->add_texture(shadowTexture);
+  person->add_texture(shadowTexture);
   for (auto item : snowflakes) {
     item->add_texture(shadowTexture);
   }
@@ -245,7 +257,12 @@ void display() {
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes[i]->draw(shadow_prog, shadow_camera);
   }
-  model->draw(shadow_prog, shadow_camera);
+  if(first_personal){
+    snowman_firstpersonal->draw(shadow_prog, shadow_camera);
+  }else{
+    model->draw(shadow_prog, shadow_camera);
+  }
+  person->draw(shadow_prog, shadow_camera);
   ground->draw(shadow_prog, shadow_camera);
   grass->draw(shadow_prog, shadow_camera);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -275,7 +292,12 @@ void display() {
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes[i]->draw(default_prog, camera);
   }
-  model->draw(default_prog, camera);
+  if(first_personal){
+    snowman_firstpersonal->draw(default_prog, camera);
+  }else{
+    model->draw(default_prog, camera);
+  }
+  person->draw(default_prog, camera);
   ground->draw(default_prog, camera);
   grass->draw(default_prog, camera);
   debug->use();
@@ -364,16 +386,16 @@ void processInput(GLFWwindow *window) {
     glfwSetWindowShouldClose(window, true);
   }
   if (keyboardState[GLFW_KEY_W]) {
-    moveControler->move_ahead(sen, myDeltaTime, camera, model);
+    moveControler->move_ahead(sen, myDeltaTime, camera, model, snowman_firstpersonal);
   }
   if (keyboardState[GLFW_KEY_S]) {
-    moveControler->move_back(sen, myDeltaTime, camera, model);
+    moveControler->move_back(sen, myDeltaTime, camera, model, snowman_firstpersonal);
   }
   if (keyboardState[GLFW_KEY_A]) {
-    moveControler->move_left(sen, myDeltaTime, camera, model);
+    moveControler->move_left(sen, myDeltaTime, camera, model, snowman_firstpersonal);
   }
   if (keyboardState[GLFW_KEY_D]) {
-    moveControler->move_right(sen, myDeltaTime, camera, model);
+    moveControler->move_right(sen, myDeltaTime, camera, model, snowman_firstpersonal);
   }
 
   if (keyboardState[GLFW_KEY_R])
@@ -412,13 +434,20 @@ void mouse_move_callback(GLFWwindow *window, double x, double y) {
   xoffset *= sensitivity;
   yoffset *= sensitivity;
 
-  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) 
+  if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE && !first_personal) 
   {
     camera->yaw += xoffset;
     camera->pitch += yoffset;
     camera->pitch = glm::clamp(camera->pitch, -89.0f, 89.0f);
   }else{
-    model->rotate -= glm::vec3(0, xoffset, 0);
+    if(first_personal){
+      snowman_firstpersonal->rotate -= glm::vec3(0, xoffset, 0);
+      camera->direction = snowmanMoveControler.get_model_direction(snowman_firstpersonal);
+      camera->position = snowman_firstpersonal->translate + first_personal_camera_y + snowmanMoveControler.get_model_direction(snowman_firstpersonal);
+    }else{
+      model->rotate -= glm::vec3(0, xoffset, 0);
+    }
+    
   }
   
 
@@ -439,7 +468,31 @@ void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_
     moveControler = &snowmanMoveControler;
   }
 }
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){}
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
+  if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
+    first_personal = !first_personal;
+    if(first_personal){
+      snowman_firstpersonal->translate = model->translate;
+      snowman_firstpersonal->rotate = model->rotate;
+      history_location = camera->position;
+      camera->mode = camera->mode & ~Camera::EulerAngle;
+      camera->position = snowman_firstpersonal->translate + first_personal_camera_y + snowmanMoveControler.get_model_direction(snowman_firstpersonal);
+      camera->direction = snowmanMoveControler.get_model_direction(snowman_firstpersonal);
+
+      moveControler = &firstPersonalMoveControler;
+    }else{
+      model->translate = snowman_firstpersonal->translate;
+      model->rotate = snowman_firstpersonal->rotate;
+      camera->mode = camera->mode | Camera::EulerAngle;
+      camera->position = history_location;
+
+      moveControler = &snowmanMoveControler;
+
+    }
+    
+    
+  }
+}
 void rotate_cammer() {
 
   if (rotate_cammer_state(false)) {

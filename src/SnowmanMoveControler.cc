@@ -14,19 +14,19 @@ glm::vec3 SnowmanMoveControler::get_model_direction(Model::Ptr model){
     return direction;
 }
 
-void SnowmanMoveControler::move_ahead(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model){
+void SnowmanMoveControler::move_ahead(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal){
     glm::vec3 direction = get_model_direction(model);
     model->translate += sen * myDeltaTime * direction;
 }
-void SnowmanMoveControler::move_back(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model){
+void SnowmanMoveControler::move_back(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal){
     glm::vec3 direction = get_model_direction(model);
     model->translate -= sen * myDeltaTime * direction;
 }
-void SnowmanMoveControler::move_left(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model){
+void SnowmanMoveControler::move_left(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal){
     glm::vec3 direction = get_model_direction(model);
     model->translate -= sen * myDeltaTime * glm::normalize(glm::cross(direction, glm::vec3(0, 1, 0)));
 }
-void SnowmanMoveControler::move_right(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model){
+void SnowmanMoveControler::move_right(float sen, float myDeltaTime, Camera::Ptr camera, Model::Ptr model, Model::Ptr firstPersonal){
     glm::vec3 direction = get_model_direction(model);
     model->translate += sen * myDeltaTime * glm::normalize(glm::cross(direction, glm::vec3(0, 1, 0)));
 }
