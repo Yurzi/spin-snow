@@ -31,6 +31,7 @@ ShaderProgram::Ptr shadow_prog;
 ShaderProgram::Ptr debug;
 ShaderProgram::Ptr dot_light_prog;
 ShaderProgram::Ptr skybox_prog;
+ShaderProgram::Ptr transparency_prog;
 
 static const int64_t SNOWFLAKES_COUNT = 64;
 std::random_device rd;
@@ -132,6 +133,7 @@ void init() {
   shadow_prog = std::make_shared<ShaderProgram>("shaders/shadow.vert", "shaders/shadow.frag");
   debug = std::make_shared<ShaderProgram>("shaders/debug.vert", "shaders/debug.frag");
   skybox_prog = std::make_shared<ShaderProgram>("shaders/skybox.vert", "shaders/skybox.frag");
+  transparency_prog = std::make_shared<ShaderProgram>("shaders/default.vert","shaders/transparency.frag");
 
   // init camera
   camera = std::make_shared<Camera>();
@@ -243,9 +245,14 @@ void display() {
   default_prog->set_uniform("shadow_zNear", shadow_camera->zNear);
   default_prog->set_uniform("shadow_zFar", shadow_camera->zFar);
   dot_light_prog->set_light("light", light);
+  transparency_prog->set_light("light", light);
+  transparency_prog->set_uniform("shadow_zNear", shadow_camera->zNear);
+  transparency_prog->set_uniform("shadow_zFar", shadow_camera->zFar);
 
   // 传递相机位置
   default_prog->set_uniform("cameraPos", camera->position);
+  transparency_prog->set_uniform("cameraPos", camera->position);
+
 
   glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
   /*-----draw objs-------*/
@@ -262,6 +269,7 @@ void display() {
   }else{
     model->draw(shadow_prog, shadow_camera);
   }
+  
   person->draw(shadow_prog, shadow_camera);
   ground->draw(shadow_prog, shadow_camera);
   grass->draw(shadow_prog, shadow_camera);
@@ -270,7 +278,7 @@ void display() {
   // default draw
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, windowWidth, windowHeight);
-  glEnable(GL_BLEND);
+  //glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   skybox_prog->use();
@@ -286,8 +294,11 @@ void display() {
   cube_light->translate = light.position;
   cube_light->draw(dot_light_prog, camera);
 
+
   default_prog->use();
   default_prog->set_uniform("shadowVP", shadow_camera->getProjectionMatrix() * shadow_camera->getViewMatrix());
+  transparency_prog->use();
+  transparency_prog->set_uniform("shadowVP", shadow_camera->getProjectionMatrix() * shadow_camera->getViewMatrix());
 
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes[i]->draw(default_prog, camera);
@@ -299,7 +310,12 @@ void display() {
   }
   person->draw(default_prog, camera);
   ground->draw(default_prog, camera);
-  grass->draw(default_prog, camera);
+  //grass->draw(default_prog, camera);
+  
+  transparency_prog->use();
+  transparency_prog->set_uniform("shadowVP", shadow_camera->getProjectionMatrix() * shadow_camera->getViewMatrix());
+  grass->draw(transparency_prog, camera);
+  
   debug->use();
   //  glDisable(GL_DEPTH_TEST);
   //  glViewport(0, 0, windowWidth / 3, windowHeight / 3);

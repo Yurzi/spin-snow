@@ -1,6 +1,6 @@
 #version 330 core
 
-in vec2 f_texcoord0;
+in vec2 texcoordOut0;
 out vec4 f_depth;
 
 struct Texture {
@@ -13,8 +13,8 @@ struct Texture {
 uniform Texture textures;
 
 void main() {
-  
-  if (texture(textures.diffuse0, f_texcoord0).a == 0) {
+  vec4 texcolor = texture(textures.diffuse0, texcoordOut0);
+  if (texcolor.a < 0.1) {
     discard;
   }else {
     f_depth = gl_FragCoord;
