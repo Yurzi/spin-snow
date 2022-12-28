@@ -12,6 +12,7 @@ struct Texture {
   sampler2D diffuse0;
   sampler2D specular0;
   sampler2D shadow0;
+  sampler2D alpha0;
 };
 
 struct Material {

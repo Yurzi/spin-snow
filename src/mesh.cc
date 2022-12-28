@@ -291,6 +291,7 @@ void Mesh::draw(ShaderProgram::Ptr shader, Camera::Ptr camera) noexcept {
   GLuint diffuseNr = 0;
   GLuint specularNr = 0;
   GLuint shadowNr = 0;
+  GLuint alphaNr = 0;
   const std::string prefix = "textures.";
 
   for (GLint i = 0; i < textures.size(); ++i) {
@@ -307,6 +308,9 @@ void Mesh::draw(ShaderProgram::Ptr shader, Camera::Ptr camera) noexcept {
     } else if (textures[i]->type == Texture::shadow) {
       name = "shadow";
       number = std::to_string(shadowNr++);
+    } else if (textures[i]->type == Texture::alpha){
+      name = "alpha";
+      number = std::to_string(alphaNr++);
     }
     glBindTexture(GL_TEXTURE_2D, textures[i]->id);
     shader->set_uniform(prefix + name + number, i);

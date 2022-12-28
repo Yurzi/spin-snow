@@ -43,7 +43,7 @@ struct Vertex {
  */
 struct Texture {
   typedef std::shared_ptr<Texture> Ptr;
-  enum Type { unknown = 0x0, diffuse = 0x1, specular = 0x2, shadow = 0x10 };
+  enum Type { unknown = 0x0, diffuse = 0x1, specular = 0x2, shadow = 0x10 , alpha = 0x11};
   GLuint id;                                               // 材质id
   Type type;                                               // 材质类型
   std::string path = "<**{YURZI::BUILT-IN::TEXTURE}**>+";  // 纹理文件的位置

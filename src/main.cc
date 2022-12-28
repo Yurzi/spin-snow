@@ -61,6 +61,7 @@ Camera::Ptr shadow_camera;
 int32_t shadowMapResolution = 16384;
 GLuint shadowMapFBO;
 Texture::Ptr shadowTexture;
+Texture::Ptr alphaTexture;
 
 CammerMoveControler cammerMoveControler;
 SnowmanMoveControler snowmanMoveControler;
@@ -205,12 +206,17 @@ void init() {
   //shadow_camera->fovy = 120;
 
   shadowTexture = std::make_shared<Texture>(Texture::shadow);
+  alphaTexture = std::make_shared<Texture>(Texture::alpha);
   glGenFramebuffers(1, &shadowMapFBO);
   shadowTexture->type = Texture::shadow;
   shadowTexture->id = Texture2DForShadowMap(shadowMapResolution, shadowMapResolution, GL_CLAMP_TO_BORDER);
   glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture->id, 0);
-  glDrawBuffer(GL_NONE);
+
+  alphaTexture->type = Texture::alpha;
+  alphaTexture->id = Texture2DForShadowMap(shadowMapResolution, shadowMapResolution, GL_CLAMP_TO_BORDER);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, alphaTexture->id, 0);  
+  //glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

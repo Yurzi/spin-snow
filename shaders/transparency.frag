@@ -12,6 +12,7 @@ struct Texture {
   sampler2D diffuse0;
   sampler2D specular0;
   sampler2D shadow0;
+  sampler2D alpha0;
 };
 
 struct Material {
@@ -75,7 +76,7 @@ Material convert_from_texture(Texture textures, vec2 texcoord, float shininess) 
   return res;
 }
 
-float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos) {
+float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos, sampler2D alphatex) {
   vec4 light_view_pos = shadowVP * worldPos;
   light_view_pos = vec4(light_view_pos.xyz/light_view_pos.w, 1.0f);
   light_view_pos = light_view_pos * 0.5 + 0.5;
@@ -100,7 +101,7 @@ float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos) {
         }    
     }
   shadow /= 9.0; 
-
+  //shadow *= texture(alphatex, light_view_pos.xy).r;
   if (light_view_pos.z > 1) {
     shadow = 0.0;
   }
@@ -112,7 +113,7 @@ void main() {
   if(fColor.a < 0.1){
     discard;
   }
-  float shadow = shadowMapping(textures.shadow0, shadowVP, vec4(worldPos, 1.0f));
+  float shadow = shadowMapping(textures.shadow0, shadowVP, vec4(worldPos, 1.0f), textures.alpha0);
   shadow = min(shadow, 0.75);
   fColor.rgb = blinn_phong(worldPos, cameraPos, normalOut, convert_from_texture(textures, texcoordOut0, 32), light, shadow);
 }
