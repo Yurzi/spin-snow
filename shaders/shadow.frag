@@ -14,7 +14,7 @@ uniform Texture textures;
 
 void main() {
   vec4 texcolor = texture(textures.diffuse0, texcoordOut0);
-  if (texcolor.a < 0.1) {
+  if (texcolor.a != 1) {
     discard;
   }else {
     f_depth = gl_FragCoord;

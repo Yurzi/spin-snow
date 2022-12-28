@@ -43,6 +43,7 @@ Model::Ptr skybox;
 std::vector<Model::Ptr> snowflakes;
 Model::Ptr snowman_firstpersonal;
 Model::Ptr person;
+Model::Ptr mc_model;
 
 Mesh::Ptr ground;
 Mesh::Ptr screen;
@@ -141,15 +142,16 @@ void init() {
   camera->position = {0, 30, 50};
 
   // init light
-  light.position = glm::vec3(3.0f, 20.0f, 10.0f);
-  light.type = Light::PointLight;
+  light.position = glm::vec3(3.0f, 30.0f, 80.0f);
+  light.type = Light::SunLight;
   light.ambient = {0.45, 0.45, 0.45};
   light.diffuse = {(float)218 / 255, (float)218 / 255, (float)192 / 255};
 
   // init objects;
   model = std::make_shared<Model>("assets/snowman.obj");
   snowman_firstpersonal = std::make_shared<Model>("assets/snowmanfirstperson.obj");
-  person = std::make_shared<Model>("assets/gy/甘雨.pmx");
+  person = std::make_shared<Model>("assets/sl/神里绫华.pmx");
+  mc_model = std::make_shared<Model>("assets/icehouse/icehouse.obj");
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes.push_back(genSnowflakes());
   }
@@ -195,12 +197,12 @@ void init() {
   // shadow
   shadow_camera = std::make_shared<Camera>();
   shadow_camera->mode = Camera::DefaultAngle | Camera::Ortho;
-  shadow_camera->left = -25;
-  shadow_camera->right = 25;
-  shadow_camera->bottom = -25;
-  shadow_camera->top = 25;
+  shadow_camera->left = -100;
+  shadow_camera->right = 100;
+  shadow_camera->bottom = -100;
+  shadow_camera->top = 100;
   shadow_camera->position = light.position;
-  shadow_camera->fovy = 120;
+  //shadow_camera->fovy = 120;
 
   shadowTexture = std::make_shared<Texture>(Texture::shadow);
   glGenFramebuffers(1, &shadowMapFBO);
@@ -213,7 +215,10 @@ void init() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // properties setting
-  person->translate = glm::vec3(-40, 0, -40);
+  person->translate = glm::vec3(20, 0, 70);
+  mc_model->translate = glm::vec3(0, -5, 0);
+  mc_model->scale = {5,5,5};
+  mc_model->rotate = {0, 180, 0};
   //model->scale = {8, 8, 8};
   ground->scale = glm::vec3(50, 50, 50);
   cube_light->scale = {0.2, 0.2, 0.2};
@@ -227,6 +232,7 @@ void init() {
   grass->add_texture(shadowTexture);
   snowman_firstpersonal->add_texture(shadowTexture);
   person->add_texture(shadowTexture);
+  mc_model->add_texture(shadowTexture);
   for (auto item : snowflakes) {
     item->add_texture(shadowTexture);
   }
@@ -271,14 +277,15 @@ void display() {
   }
   
   person->draw(shadow_prog, shadow_camera);
-  ground->draw(shadow_prog, shadow_camera);
+  mc_model->draw(shadow_prog, shadow_camera);
+  //ground->draw(shadow_prog, shadow_camera);
   grass->draw(shadow_prog, shadow_camera);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // default draw
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, windowWidth, windowHeight);
-  //glEnable(GL_BLEND);
+  glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   skybox_prog->use();
@@ -309,12 +316,13 @@ void display() {
     model->draw(default_prog, camera);
   }
   person->draw(default_prog, camera);
-  ground->draw(default_prog, camera);
+  //ground->draw(default_prog, camera);
   //grass->draw(default_prog, camera);
   
   transparency_prog->use();
   transparency_prog->set_uniform("shadowVP", shadow_camera->getProjectionMatrix() * shadow_camera->getViewMatrix());
   grass->draw(transparency_prog, camera);
+  mc_model->draw(transparency_prog, camera);
   
   debug->use();
   //  glDisable(GL_DEPTH_TEST);
