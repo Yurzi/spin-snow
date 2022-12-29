@@ -76,7 +76,7 @@ Material convert_from_texture(Texture textures, vec2 texcoord, float shininess) 
   return res;
 }
 
-float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos, sampler2D alphatex) {
+float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos, sampler2D alphaTex) {
   vec4 light_view_pos = shadowVP * worldPos;
   light_view_pos = vec4(light_view_pos.xyz/light_view_pos.w, 1.0f);
   light_view_pos = light_view_pos * 0.5 + 0.5;
@@ -101,7 +101,8 @@ float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos, sampler2D alpha
         }    
     }
   shadow /= 9.0; 
-  //shadow *= texture(alphatex, light_view_pos.xy).r;
+  float alpha = texture(alphaTex, light_view_pos.xy).r;
+  shadow *= alpha * alpha * alpha * alpha;
   if (light_view_pos.z > 1) {
     shadow = 0.0;
   }

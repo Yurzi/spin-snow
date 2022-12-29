@@ -1,7 +1,8 @@
 #version 330 core
 
 in vec2 texcoordOut0;
-out vec4 fColor;
+//out vec4 fColor;
+out vec4 f_color;
 //out vec4 f_depth;
 
 struct Texture {
@@ -16,12 +17,12 @@ uniform Texture textures;
 
 void main() {
   vec4 texcolor = texture(textures.diffuse0, texcoordOut0);
-  if (texcolor.a != 1) {
+  if (texcolor.a == 0) {
     discard;
   }else {
     //f_depth = gl_FragCoord;
-    fColor = vec4(vec3(texcolor.aaa), 1.0);
+    //f_color = vec4(texcolor.aaaa);
+    float a = texcolor.a;
+    f_color = vec4(a,texcolor.gba);
   }
-  
-
 }

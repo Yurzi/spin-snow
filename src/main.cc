@@ -141,6 +141,7 @@ void init() {
   camera = std::make_shared<Camera>();
   camera->aspect = (float)windowWidth / windowHeight;
   camera->position = {0, 30, 50};
+  camera->zFar = 150;
 
   // init light
   light.position = glm::vec3(3.0f, 30.0f, 80.0f);
@@ -198,10 +199,10 @@ void init() {
   // shadow
   shadow_camera = std::make_shared<Camera>();
   shadow_camera->mode = Camera::DefaultAngle | Camera::Ortho;
-  shadow_camera->left = -100;
-  shadow_camera->right = 100;
-  shadow_camera->bottom = -100;
-  shadow_camera->top = 100;
+  shadow_camera->left = -150;
+  shadow_camera->right = 150;
+  shadow_camera->bottom = -150;
+  shadow_camera->top = 150;
   shadow_camera->position = light.position;
   //shadow_camera->fovy = 120;
 
@@ -214,10 +215,18 @@ void init() {
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture->id, 0);
 
   alphaTexture->type = Texture::alpha;
-  alphaTexture->id = Texture2DForShadowMap(shadowMapResolution, shadowMapResolution, GL_CLAMP_TO_BORDER);
+  //alphaTexture->id = Texture2DForShadowMap(shadowMapResolution, shadowMapResolution, GL_CLAMP_TO_BORDER);
+  unsigned int texColorBuffer;
+  glGenTextures(1, &texColorBuffer);
+  glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shadowMapResolution, shadowMapResolution, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  alphaTexture->id = texColorBuffer;
+
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, alphaTexture->id, 0);  
   //glDrawBuffer(GL_NONE);
-  glReadBuffer(GL_NONE);
+  //glReadBuffer(GL_NONE);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // properties setting
@@ -234,13 +243,24 @@ void init() {
 
   ground->add_texture(shadowTexture);
   model->add_texture(shadowTexture);
-  screen->add_texture(shadowTexture);
+  //screen->add_texture(shadowTexture);
   grass->add_texture(shadowTexture);
   snowman_firstpersonal->add_texture(shadowTexture);
   person->add_texture(shadowTexture);
   mc_model->add_texture(shadowTexture);
   for (auto item : snowflakes) {
     item->add_texture(shadowTexture);
+  }
+
+   ground->add_texture(alphaTexture);
+  model->add_texture(alphaTexture);
+  screen->add_texture(alphaTexture);
+  grass->add_texture(alphaTexture);
+  snowman_firstpersonal->add_texture(alphaTexture);
+  person->add_texture(alphaTexture);
+  mc_model->add_texture(alphaTexture);
+  for (auto item : snowflakes) {
+    item->add_texture(alphaTexture);
   }
 
   default_prog->use();
@@ -271,8 +291,16 @@ void display() {
 
   // shadow draw
   glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-  glClear(GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, shadowMapResolution, shadowMapResolution);
+  glEnable(GL_BLEND);
+  //glEnablei(GL_BLEND, 0);
+  //glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
+  //glBlendFunc(GL_ONE, GL_ZERO);
+
+
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes[i]->draw(shadow_prog, shadow_camera);
   }
@@ -283,16 +311,17 @@ void display() {
   }
   
   person->draw(shadow_prog, shadow_camera);
-  mc_model->draw(shadow_prog, shadow_camera);
   //ground->draw(shadow_prog, shadow_camera);
+  mc_model->draw(shadow_prog, shadow_camera);
+  glDisable(GL_BLEND);
   grass->draw(shadow_prog, shadow_camera);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  
 
   // default draw
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, windowWidth, windowHeight);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
   skybox_prog->use();
   glActiveTexture(GL_TEXTURE16);
@@ -316,26 +345,41 @@ void display() {
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes[i]->draw(default_prog, camera);
   }
+  
   if(first_personal){
     snowman_firstpersonal->draw(default_prog, camera);
   }else{
     model->draw(default_prog, camera);
   }
+  
   person->draw(default_prog, camera);
   //ground->draw(default_prog, camera);
   //grass->draw(default_prog, camera);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
   transparency_prog->use();
   transparency_prog->set_uniform("shadowVP", shadow_camera->getProjectionMatrix() * shadow_camera->getViewMatrix());
+  /*
+  if(first_personal){
+    snowman_firstpersonal->draw(transparency_prog, camera);
+  }else{
+    model->draw(transparency_prog, camera);
+  }
+  */
   grass->draw(transparency_prog, camera);
   mc_model->draw(transparency_prog, camera);
+  glDisable(GL_BLEND);
   
   debug->use();
   //  glDisable(GL_DEPTH_TEST);
-  //  glViewport(0, 0, windowWidth / 3, windowHeight / 3);
+  //  glViewport(0, 0, windowWidth / 2, windowHeight / 2);
+   
   //  screen->draw(debug);
   //  glEnable(GL_DEPTH_TEST);
   //  glDisable(GL_BLEND);
+
+
 
   anmineSnowflakes();
 }
