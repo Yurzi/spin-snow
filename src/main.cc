@@ -44,6 +44,7 @@ std::vector<Model::Ptr> snowflakes;
 Model::Ptr snowman_firstpersonal;
 Model::Ptr person;
 Model::Ptr mc_model;
+Model::Ptr hammer;
 
 Mesh::Ptr ground;
 Mesh::Ptr screen;
@@ -82,8 +83,8 @@ void mouse_move_callback(GLFWwindow *window, double x, double y);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_t action, int32_t mods);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-void rotate_cammer();
-bool rotate_cammer_state(bool is_change);
+void rotate_camera();
+bool rotate_camera_state(bool is_change);
 float get_time_delta();
 // process user input
 void processInput(GLFWwindow *window);
@@ -154,6 +155,7 @@ void init() {
   snowman_firstpersonal = std::make_shared<Model>("assets/snowmanfirstperson.obj");
   person = std::make_shared<Model>("assets/sl/神里绫华.pmx");
   mc_model = std::make_shared<Model>("assets/icehouse/icehouse.obj");
+  hammer = std::make_shared<Model>("assets/hammer.obj");
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
     snowflakes.push_back(genSnowflakes());
   }
@@ -199,12 +201,12 @@ void init() {
   // shadow
   shadow_camera = std::make_shared<Camera>();
   shadow_camera->mode = Camera::DefaultAngle | Camera::Ortho;
-  shadow_camera->left = -150;
-  shadow_camera->right = 150;
-  shadow_camera->bottom = -150;
-  shadow_camera->top = 150;
+  shadow_camera->left = -100;
+  shadow_camera->right = 100;
+  shadow_camera->bottom = -100;
+  shadow_camera->top = 100;
   shadow_camera->position = light.position;
-  //shadow_camera->fovy = 120;
+
 
   shadowTexture = std::make_shared<Texture>(Texture::shadow);
   alphaTexture = std::make_shared<Texture>(Texture::alpha);
@@ -215,7 +217,6 @@ void init() {
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowTexture->id, 0);
 
   alphaTexture->type = Texture::alpha;
-  //alphaTexture->id = Texture2DForShadowMap(shadowMapResolution, shadowMapResolution, GL_CLAMP_TO_BORDER);
   unsigned int texColorBuffer;
   glGenTextures(1, &texColorBuffer);
   glBindTexture(GL_TEXTURE_2D, texColorBuffer);
@@ -225,8 +226,6 @@ void init() {
   alphaTexture->id = texColorBuffer;
 
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, alphaTexture->id, 0);  
-  //glDrawBuffer(GL_NONE);
-  //glReadBuffer(GL_NONE);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // properties setting
@@ -234,7 +233,8 @@ void init() {
   mc_model->translate = glm::vec3(0, -5, 0);
   mc_model->scale = {5,5,5};
   mc_model->rotate = {0, 180, 0};
-  //model->scale = {8, 8, 8};
+  hammer->translate = {-10, 15, 35};
+  model->translate = {0,0,10};
   ground->scale = glm::vec3(50, 50, 50);
   cube_light->scale = {0.2, 0.2, 0.2};
   cube_light->translate = light.position;
@@ -248,17 +248,19 @@ void init() {
   snowman_firstpersonal->add_texture(shadowTexture);
   person->add_texture(shadowTexture);
   mc_model->add_texture(shadowTexture);
+  hammer->add_texture(shadowTexture);
   for (auto item : snowflakes) {
     item->add_texture(shadowTexture);
   }
 
-   ground->add_texture(alphaTexture);
+  ground->add_texture(alphaTexture);
   model->add_texture(alphaTexture);
   screen->add_texture(alphaTexture);
   grass->add_texture(alphaTexture);
   snowman_firstpersonal->add_texture(alphaTexture);
   person->add_texture(alphaTexture);
   mc_model->add_texture(alphaTexture);
+  hammer->add_texture(alphaTexture);
   for (auto item : snowflakes) {
     item->add_texture(alphaTexture);
   }
@@ -294,11 +296,7 @@ void display() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0, 0, shadowMapResolution, shadowMapResolution);
   glEnable(GL_BLEND);
-  //glEnablei(GL_BLEND, 0);
-  //glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  //glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ONE, GL_ZERO);
-  //glBlendFunc(GL_ONE, GL_ZERO);
 
 
   for (uint16_t i = 0; i < SNOWFLAKES_COUNT; ++i) {
@@ -311,7 +309,7 @@ void display() {
   }
   
   person->draw(shadow_prog, shadow_camera);
-  //ground->draw(shadow_prog, shadow_camera);
+  hammer->draw(shadow_prog, shadow_camera);
   mc_model->draw(shadow_prog, shadow_camera);
   glDisable(GL_BLEND);
   grass->draw(shadow_prog, shadow_camera);
@@ -353,20 +351,13 @@ void display() {
   }
   
   person->draw(default_prog, camera);
-  //ground->draw(default_prog, camera);
-  //grass->draw(default_prog, camera);
+  hammer->draw(default_prog, camera);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendEquation(GL_FUNC_ADD);
   
   transparency_prog->use();
   transparency_prog->set_uniform("shadowVP", shadow_camera->getProjectionMatrix() * shadow_camera->getViewMatrix());
-  /*
-  if(first_personal){
-    snowman_firstpersonal->draw(transparency_prog, camera);
-  }else{
-    model->draw(transparency_prog, camera);
-  }
-  */
   grass->draw(transparency_prog, camera);
   mc_model->draw(transparency_prog, camera);
   glDisable(GL_BLEND);
@@ -430,7 +421,7 @@ int main(int argc, char *argv[]) {
     processInput(window);
     // rotate cammer
     // ------------------------------------
-    rotate_cammer();
+    rotate_camera();
     // render
     // ------------------------------------
     display();
@@ -533,7 +524,7 @@ void keyboard_callback(GLFWwindow *window, int32_t key, int32_t scancode, int32_
   keyboardState[key] = (action == GLFW_PRESS || action == GLFW_REPEAT) ? true : false;
 
   if (key == GLFW_KEY_C && action == GLFW_PRESS && !first_personal) {
-    rotate_cammer_state(true);
+    rotate_camera_state(true);
   }
   if (key == GLFW_KEY_V && action == GLFW_PRESS && !first_personal) {
     moveControler = &cammerMoveControler;
@@ -567,9 +558,9 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
     
   }
 }
-void rotate_cammer() {
+void rotate_camera() {
 
-  if (rotate_cammer_state(false)) {
+  if (rotate_camera_state(false)) {
     float myDeltaTime = deltaTime;
     float sen = 1;
     float speed = sen * myDeltaTime * 10;
@@ -580,7 +571,6 @@ void rotate_cammer() {
 
     float vecx = old_position_x - pointx;
     float vecz = old_position_z - pointz;
-    // float r = sqrt(pow(old_position_x, 2) + pow(old_position_z, 2));
     float dir_x = 0;
     float dir_z = 0;
     if (old_position_z == pointz) {
@@ -608,7 +598,7 @@ void rotate_cammer() {
     camera->position.z = new_position_z;
   }
 }
-bool rotate_cammer_state(bool is_change) {
+bool rotate_camera_state(bool is_change) {
   static bool state = false;
   if (is_change) {
     state = !state;

@@ -82,16 +82,14 @@ float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos, sampler2D alpha
   light_view_pos = light_view_pos * 0.5 + 0.5;
 
   float closetDepth = texture(tex, light_view_pos.xy).r;
-  //closetDepth = linearize_depth(closetDepth, shadow_zNear, shadow_zFar) / shadow_zFar;
   float currentDepth = light_view_pos.z;
-  //currentDepth = linearize_depth(light_view_pos.z, shadow_zNear, shadow_zFar) / shadow_zFar;
-  //float bias = 0.005;
   vec3 lightDir = light.position - worldPos.xyz;
-  float bias = max(0.05 * (1.0 - dot(normalOut, lightDir)), 0.001);
-  //float shadow = (currentDepth > closetDepth + bias) ? (1.0) : (0.0);
+  float bias = max(0.05 * (1.0 - dot(normalOut, lightDir)), 0.005);
+
 
   float shadow = 0;
   vec2 texelSize = 1.0 / textureSize(tex, 0);
+  
   for(int x = -1; x <= 1; ++x)
     {
       for(int y = -1; y <= 1; ++y)
@@ -101,6 +99,7 @@ float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos, sampler2D alpha
         }    
     }
   shadow /= 9.0; 
+
   float alpha = texture(alphaTex, light_view_pos.xy).r;
   shadow *= alpha * alpha * alpha * alpha;
   if (light_view_pos.z > 1) {

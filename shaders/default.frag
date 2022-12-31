@@ -76,19 +76,15 @@ Material convert_from_texture(Texture textures, vec2 texcoord, float shininess) 
   return res;
 }
 
-float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos) {
+float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos, sampler2D alphaTex) {
   vec4 light_view_pos = shadowVP * worldPos;
   light_view_pos = vec4(light_view_pos.xyz/light_view_pos.w, 1.0f);
   light_view_pos = light_view_pos * 0.5 + 0.5;
 
   float closetDepth = texture(tex, light_view_pos.xy).r;
-  //closetDepth = linearize_depth(closetDepth, shadow_zNear, shadow_zFar) / shadow_zFar;
   float currentDepth = light_view_pos.z;
-  //currentDepth = linearize_depth(light_view_pos.z, shadow_zNear, shadow_zFar) / shadow_zFar;
-  //float bias = 0.005;
   vec3 lightDir = light.position - worldPos.xyz;
-  float bias = max(0.05 * (1.0 - dot(normalOut, lightDir)), 0.001);
-  //float shadow = (currentDepth > closetDepth + bias) ? (1.0) : (0.0);
+  float bias = max(0.05 * (1.0 - dot(normalOut, lightDir)), 0.005);
 
   float shadow = 0;
   vec2 texelSize = 1.0 / textureSize(tex, 0);
@@ -101,7 +97,8 @@ float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos) {
         }    
     }
   shadow /= 9.0; 
-
+  float alpha = texture(alphaTex, light_view_pos.xy).r;
+  shadow *= alpha * alpha * alpha * alpha;
   if (light_view_pos.z > 1) {
     shadow = 0.0;
   }
@@ -110,7 +107,7 @@ float shadowMapping(sampler2D tex, mat4 shadowVP, vec4 worldPos) {
 
 void main() {
   fColor = texture(textures.diffuse0, texcoordOut0);
-  float shadow = shadowMapping(textures.shadow0, shadowVP, vec4(worldPos, 1.0f));
+  float shadow = shadowMapping(textures.shadow0, shadowVP, vec4(worldPos, 1.0f), textures.alpha0);
   shadow = min(shadow, 0.75);
   fColor.rgb = blinn_phong(worldPos, cameraPos, normalOut, convert_from_texture(textures, texcoordOut0, 32), light, shadow);
 }
