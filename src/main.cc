@@ -205,6 +205,7 @@ void init() {
   shadow_camera->right = 100;
   shadow_camera->bottom = -100;
   shadow_camera->top = 100;
+  shadow_camera->zFar = 200;
   shadow_camera->position = light.position;
 
 
